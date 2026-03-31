@@ -1,0 +1,56 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "fF-seAsQbNBU2VzbtgJd3"
+uri = "file://artifacts/brinquedos-cientificos/src/assets/images/hero.png"
+type = "image"
+title = "Kids doing science experiments"
+
+[[generated]]
+id = "DkdgjnbIsuafDhifJ5RV4"
+uri = "file://artifacts/brinquedos-cientificos/src/assets/images/solar-car.png"
+type = "image"
+title = "Solar car toy"
+
+[[generated]]
+id = "JvJ4c2G27D-XWm2dSms6D"
+uri = "file://artifacts/brinquedos-cientificos/src/assets/images/catapult.png"
+type = "image"
+title = "Catapult toy"
+
+[[generated]]
+id = "tuPb5x0S1immDt2dXHwcq"
+uri = "file://artifacts/brinquedos-cientificos/src/assets/images/volcano.png"
+type = "image"
+title = "Lava volcano toy"
+
+[[generated]]
+id = "NthynpMBgXO4M-nR2Jzcq"
+uri = "file://artifacts/brinquedos-cientificos/src/assets/images/spinning-top.png"
+type = "image"
+title = "Spinning top toy"
+
+[[generated]]
+id = "VPLHoerjfchySI66j22MO"
+uri = "file://artifacts/brinquedos-cientificos/src/assets/images/team-1.png"
+type = "image"
+title = "Male coordinator educator"
+
+[[generated]]
+id = "Xkak8FVC9jzYL5WXB6H7z"
+uri = "file://artifacts/brinquedos-cientificos/src/assets/images/team-2.png"
+type = "image"
+title = "Female science educator"
+
+[[generated]]
+id = "70Ci1ktdHQxYlOKAW0NyQ"
+uri = "file://artifacts/brinquedos-cientificos/src/assets/images/team-3.png"
+type = "image"
+title = "Male engineer"
+
+[[generated]]
+id = "L9ioI-6BzwTaYZu-VLK3C"
+uri = "file://artifacts/brinquedos-cientificos/src/assets/images/team-4.png"
+type = "image"
+title = "Female university student"
