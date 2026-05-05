@@ -2,8 +2,11 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout";
 import { ArrowRight, BookOpen, Lightbulb, Play, Microscope, Users, TestTube, Target } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
+import { cachifyImage } from "@/lib/utils";
 import bannerImg from "@/assets/images/banner-principal.jpg";
-import { toys, team } from "@/lib/data";
+import { team } from "@/lib/data";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -19,6 +22,19 @@ const staggerContainer = {
 };
 
 export default function Home() {
+  const [homeToys, setHomeToys] = useState<{id: string, title: string, description: string, image: string, concepts: string[]}[]>([]);
+
+  useEffect(() => {
+    supabase
+      .from("toys")
+      .select("*")
+      .eq("status", "approved")
+      .limit(4)
+      .then(({ data }) => {
+        setHomeToys(data ?? []);
+      });
+  }, []);
+
   return (
     <Layout>
       {/* Banner Section */}
@@ -132,10 +148,12 @@ export default function Home() {
               transition={{ duration: 0.6 }}
               className="lg:w-1/2 w-full"
             >
+            {homeToys.length >= 2 && (
               <div className="grid grid-cols-2 gap-4">
-                <img src={toys[0].image} alt="Toy" className="rounded-2xl shadow-lg w-full h-48 md:h-64 object-cover" />
-                <img src={toys[1].image} alt="Toy" className="rounded-2xl shadow-lg w-full h-48 md:h-64 object-cover mt-8" />
+                <img src={cachifyImage(homeToys[0].image)} alt={homeToys[0].title} className="rounded-2xl shadow-lg w-full h-48 md:h-64 object-cover" />
+                <img src={cachifyImage(homeToys[1].image)} alt={homeToys[1].title} className="rounded-2xl shadow-lg w-full h-48 md:h-64 object-cover mt-8" />
               </div>
+            )}
             </motion.div>
           </div>
         </div>
@@ -158,15 +176,18 @@ export default function Home() {
             viewport={{ once: true }}
             className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
           >
-            {toys.slice(0, 4).map((toy) => (
+            {homeToys.slice(0, 8).map((toy) => (
               <motion.div key={toy.id} variants={fadeIn} className="group cursor-pointer">
                 <Link href={`/portfolio/${toy.id}`}>
                   <div className="bg-gray-50 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col border border-gray-100">
                     <div className="relative aspect-square overflow-hidden">
                       <img 
-                        src={toy.image} 
+                        src={cachifyImage(toy.image)} 
                         alt={toy.title} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => {
+                          e.currentTarget.src = "https://placehold.co/400x400?text=Sem+Imagem";
+                        }}
                       />
                       <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                         <div className="bg-white text-primary p-3 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform">
@@ -176,7 +197,7 @@ export default function Home() {
                     </div>
                     <div className="p-6 flex-1 flex flex-col">
                       <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">{toy.title}</h3>
-                      <p className="text-muted-foreground text-sm flex-1">{toy.description}</p>
+                      <p className="text-muted-foreground text-sm flex-1 line-clamp-2">{toy.description}</p>
                       <div className="mt-4 flex flex-wrap gap-2">
                         {toy.concepts.slice(0, 2).map((concept, i) => (
                           <span key={i} className="text-xs font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-md">
