@@ -1,0 +1,8 @@
+Atualizar site:
+pnpm --filter brinquedos-cientificos run build
+
+Terminou de trabalhar:
+git add . && git commit -m "msg" && git push
+
+Vai começar a trabalhar:
+git pull

@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Brinquedos Científicos"
+version = "1.0.0"
+id = "artifacts/brinquedos-cientificos"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23371
+
+[services.development]
+run = "pnpm --filter @workspace/brinquedos-cientificos run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/brinquedos-cientificos", "run", "build" ]
+publicDir = "artifacts/brinquedos-cientificos/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23371"
+BASE_PATH = "/"
