@@ -32,10 +32,13 @@ export default function Home() {
       .from("toys")
       .select("id, title, description, image, concepts")
       .eq("status", "approved")
-      .limit(4)
+      .limit(20)
       .then(({ data, error }) => {
         if (error) setError(true);
-        else setHomeToys(data ?? []);
+        else {
+          const shuffled = (data ?? []).sort(() => Math.random() - 0.5);
+          setHomeToys(shuffled.slice(0, 4));
+        }
         setLoading(false);
       });
   }, []);
