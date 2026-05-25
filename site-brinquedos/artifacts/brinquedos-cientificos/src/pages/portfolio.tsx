@@ -4,14 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-
-type Toy = {
-  id: string;
-  title: string;
-  description: string;
-  image: string;
-  concepts: string[];
-};
+import { type Toy } from "@/lib/types";
 
 export default function Portfolio() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,7 +14,7 @@ export default function Portfolio() {
   useEffect(() => {
     supabase
       .from("toys")
-      .select("*")
+      .select("id, title, description, image, concepts")
       .eq("status", "approved")
       .then(({ data }) => {
         setToys(data ?? []);
