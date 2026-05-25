@@ -5,6 +5,7 @@ import { ArrowRight, BookOpen, Lightbulb, Play, Microscope, Users, TestTube, Tar
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { cachifyImage } from "@/lib/utils";
+import { type Toy } from "@/lib/types";
 import bannerImg from "@/assets/images/banner-principal.jpg";
 import { team } from "@/lib/data";
 
@@ -22,16 +23,20 @@ const staggerContainer = {
 };
 
 export default function Home() {
-  const [homeToys, setHomeToys] = useState<{id: string, title: string, description: string, image: string, concepts: string[]}[]>([]);
+  const [homeToys, setHomeToys] = useState<Toy[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     supabase
       .from("toys")
-      .select("*")
+      .select("id, title, description, image, concepts")
       .eq("status", "approved")
-      .limit(4)
-      .then(({ data }) => {
-        setHomeToys(data ?? []);
+      .limit(8)
+      .then(({ data, error }) => {
+        if (error) setError(true);
+        else setHomeToys(data ?? []);
+        setLoading(false);
       });
   }, []);
 
@@ -39,9 +44,9 @@ export default function Home() {
     <Layout>
       {/* Banner Section */}
       <section className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
-        <img 
-          src={bannerImg} 
-          alt="Banner Projeto Brinquedos Científicos" 
+        <img
+          src={bannerImg}
+          alt="Banner Projeto Brinquedos Científicos"
           className="w-full h-auto block"
         />
       </section>
@@ -49,7 +54,7 @@ export default function Home() {
       {/* Feature Cards Section */}
       <section className="container mx-auto px-4 md:px-6 relative z-20 -mt-4 mb-20">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -66,7 +71,7 @@ export default function Home() {
             </Link>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -83,7 +88,7 @@ export default function Home() {
             </Link>
           </motion.div>
 
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -106,7 +111,7 @@ export default function Home() {
       <section className="py-20 bg-blue-50/50">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col lg:flex-row items-center gap-12">
-            <motion.div 
+            <motion.div
               initial="hidden"
               whileInView="visible"
               viewport={{ once: true }}
@@ -140,20 +145,34 @@ export default function Home() {
                 ))}
               </ul>
             </motion.div>
-            
-            <motion.div 
+
+            <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
               className="lg:w-1/2 w-full"
             >
-            {homeToys.length >= 2 && (
-              <div className="grid grid-cols-2 gap-4">
-                <img src={cachifyImage(homeToys[0].image)} alt={homeToys[0].title} className="rounded-2xl shadow-lg w-full h-48 md:h-64 object-cover" />
-                <img src={cachifyImage(homeToys[1].image)} alt={homeToys[1].title} className="rounded-2xl shadow-lg w-full h-48 md:h-64 object-cover mt-8" />
-              </div>
-            )}
+              {loading ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-2xl bg-gray-200 animate-pulse w-full h-48 md:h-64" />
+                  <div className="rounded-2xl bg-gray-200 animate-pulse w-full h-48 md:h-64 mt-8" />
+                </div>
+              ) : homeToys.length >= 2 ? (
+                <div className="grid grid-cols-2 gap-4">
+                  <img src={cachifyImage(homeToys[0].image)} alt={homeToys[0].title} className="rounded-2xl shadow-lg w-full h-48 md:h-64 object-cover" />
+                  <img src={cachifyImage(homeToys[1].image)} alt={homeToys[1].title} className="rounded-2xl shadow-lg w-full h-48 md:h-64 object-cover mt-8" />
+                </div>
+              ) : (
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="rounded-2xl bg-primary/10 w-full h-48 md:h-64 flex items-center justify-center">
+                    <Microscope className="h-12 w-12 text-primary/40" />
+                  </div>
+                  <div className="rounded-2xl bg-primary/10 w-full h-48 md:h-64 flex items-center justify-center mt-8">
+                    <TestTube className="h-12 w-12 text-primary/40" />
+                  </div>
+                </div>
+              )}
             </motion.div>
           </div>
         </div>
@@ -168,50 +187,73 @@ export default function Home() {
               Conheça alguns dos nossos brinquedos científicos mais populares.
             </p>
           </div>
-          
-          <motion.div 
-            variants={staggerContainer}
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
-          >
-            {homeToys.slice(0, 8).map((toy) => (
-              <motion.div key={toy.id} variants={fadeIn} className="group cursor-pointer">
-                <Link href={`/portfolio/${toy.id}`}>
-                  <div className="bg-gray-50 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col border border-gray-100">
-                    <div className="relative aspect-square overflow-hidden">
-                      <img 
-                        src={cachifyImage(toy.image)} 
-                        alt={toy.title} 
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        onError={(e) => {
-                          e.currentTarget.src = "https://placehold.co/400x400?text=Sem+Imagem";
-                        }}
-                      />
-                      <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                        <div className="bg-white text-primary p-3 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform">
-                          <Play className="h-6 w-6" />
+
+          {error ? (
+            <p className="text-center text-muted-foreground py-12">
+              Não foi possível carregar os projetos. Tente novamente mais tarde.
+            </p>
+          ) : loading ? (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
+                  <div className="aspect-square bg-gray-200 animate-pulse" />
+                  <div className="p-6 space-y-3">
+                    <div className="h-5 bg-gray-200 animate-pulse rounded w-3/4" />
+                    <div className="h-4 bg-gray-200 animate-pulse rounded w-full" />
+                    <div className="h-4 bg-gray-200 animate-pulse rounded w-1/2" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : homeToys.length === 0 ? (
+            <p className="text-center text-muted-foreground py-12">
+              Nenhum projeto disponível no momento.
+            </p>
+          ) : (
+            <motion.div
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
+            >
+              {homeToys.map((toy) => (
+                <motion.div key={toy.id} variants={fadeIn} className="group cursor-pointer">
+                  <Link href={`/portfolio/${toy.id}`}>
+                    <div className="bg-gray-50 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col border border-gray-100">
+                      <div className="relative aspect-square overflow-hidden">
+                        <img
+                          src={cachifyImage(toy.image)}
+                          alt={toy.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          onError={(e) => {
+                            e.currentTarget.src = "https://placehold.co/400x400?text=Sem+Imagem";
+                          }}
+                        />
+                        <div className="absolute inset-0 bg-primary/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <div className="bg-white text-primary p-3 rounded-full transform translate-y-4 group-hover:translate-y-0 transition-transform">
+                            <Play className="h-6 w-6" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="p-6 flex-1 flex flex-col">
+                        <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">{toy.title}</h3>
+                        <p className="text-muted-foreground text-sm flex-1 line-clamp-2">{toy.description}</p>
+                        <div className="mt-4 flex flex-wrap gap-2">
+                          {toy.concepts.slice(0, 2).map((concept, i) => (
+                            <span key={i} className="text-xs font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-md">
+                              {concept}
+                            </span>
+                          ))}
                         </div>
                       </div>
                     </div>
-                    <div className="p-6 flex-1 flex flex-col">
-                      <h3 className="text-xl font-bold text-foreground mb-2 group-hover:text-primary transition-colors">{toy.title}</h3>
-                      <p className="text-muted-foreground text-sm flex-1 line-clamp-2">{toy.description}</p>
-                      <div className="mt-4 flex flex-wrap gap-2">
-                        {toy.concepts.slice(0, 2).map((concept, i) => (
-                          <span key={i} className="text-xs font-bold px-2 py-1 bg-blue-100 text-blue-700 rounded-md">
-                            {concept}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            ))}
-          </motion.div>
-          
+                  </Link>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+
           <div className="mt-12 text-center">
             <Link href="/portfolio" className="inline-flex items-center gap-2 bg-primary/10 text-primary hover:bg-primary hover:text-white font-bold text-lg px-8 py-4 rounded-xl transition-all">
               Ver Todos os Brinquedos <ArrowRight className="h-5 w-5" />
@@ -229,14 +271,14 @@ export default function Home() {
               Recursos gratuitos para professores, pais e alunos.
             </p>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               { title: "Guias de Construção", desc: "Passo a passo detalhado com fotos para montar os brinquedos em casa.", color: "bg-blue-500", icon: <BookOpen className="h-8 w-8" /> },
               { title: "Planos de Aula", desc: "Materiais alinhados à BNCC para professores aplicarem em sala de aula.", color: "bg-green-600", icon: <TestTube className="h-8 w-8" /> },
               { title: "Vídeo Tutoriais", desc: "Aprenda assistindo nossos vídeos explicativos sobre cada projeto.", color: "bg-orange-500", icon: <Play className="h-8 w-8" /> }
             ].map((item, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 initial={{ opacity: 0, y: 30 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -267,10 +309,10 @@ export default function Home() {
             </div>
             <h2 className="text-4xl md:text-5xl font-black text-foreground">Nossa Equipe</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {team.map((member, i) => (
-              <motion.div 
+              <motion.div
                 key={i}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
@@ -291,7 +333,7 @@ export default function Home() {
 
       {/* Bottom CTA Banner */}
       <section className="py-24 relative overflow-hidden bg-primary">
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzR2LThoOHY4aC04em0wLThWMThoOHY4aC04em0tOC04VjEwaDh2OGgtOHptMCAwdjhINDBWMjZIMjZWMThoOHptLTgtOHY4aC04VjEwaDh6bTggMHY4SDI2VjEwaDh6TTI2IDM0djhoOHY4aC04di04SDE4djhoOFYzNEgyNnpNOCAzNHYtOGg4djhIOHptMC04VjE4aDh2OGgtOHptLTgtOFYxMGg4djo4SDBWMTh6bTggMHY4SDBWMThoOHptOCAwdjhIOFYxOGg4em04IDBWMThIMTh2OGg4em04IDhWMjZIMTh2OGg4em04IDBWMjZIMjZ2OGg4em04IDBWMjZIMzR2OGg4em0wIDBWMjZINDJ2OGg4em04IDBWMjZINDB2OGg4em0wLThWMThINDB2OGg4em0wIDBWMThINDJ2OGg4em0tOC04VjEwSDQwdjhoOHptOCAwVjEwSDQydjhoOHptOCAwVjEwSDQwdjh2MThoOHpNOCAyNnYtOEgwdjhoOHptMCA4VjI2SDB2OGg4em0wIDhWMzRIMHY4aDh6bTggMHYtOEg4djhIMTh2OGg4di04SDI2em0tOC04VjM0SDh2OGg4em0tOC04VjI2SDB2OGg4eiIgLz48L2c+PC9nPjwvc3ZnPg==')] opacity-20"></div>
+        <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-20" />
         <div className="container mx-auto px-4 md:px-6 relative z-10 text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
