@@ -32,7 +32,7 @@ export default function Home() {
       .from("toys")
       .select("id, title, description, image, concepts")
       .eq("status", "approved")
-      .limit(8)
+      .limit(4)
       .then(({ data, error }) => {
         if (error) setError(true);
         else setHomeToys(data ?? []);
@@ -217,7 +217,7 @@ export default function Home() {
               viewport={{ once: true }}
               className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8"
             >
-              {homeToys.map((toy) => (
+              {homeToys.slice(0, 4).map((toy) => (
                 <motion.div key={toy.id} variants={fadeIn} className="group cursor-pointer">
                   <Link href={`/portfolio/${toy.id}`}>
                     <div className="bg-gray-50 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 h-full flex flex-col border border-gray-100">
