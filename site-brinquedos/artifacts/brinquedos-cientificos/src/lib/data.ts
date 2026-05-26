@@ -18,10 +18,10 @@ export const toys = [
 ];
 
 export const team = [
-  { name: "Gilberto Pacheco", role: "Coordenador", image: team1Img },
-  { name: "Ana Lima", role: "Educadora", image: team2Img },
-  { name: "Pedro Souza", role: "Engenheiro", image: team3Img },
-  { name: "Mariana Costa", role: "Bolsista", image: team4Img }
+  { name: "Gilberto Pacheco", role: "Coordenador", bio: "Docente da URI Santo Ângelo, responsável pela coordenação geral do projeto.", image: team1Img },
+  { name: "Ana Lima", role: "Educadora", bio: "Pedagoga com foco em ciências, acompanha as atividades nas escolas parceiras.", image: team2Img },
+  { name: "Pedro Souza", role: "Engenheiro", bio: "Engenheiro responsável pelo desenvolvimento dos protótipos e circuitos.", image: team3Img },
+  { name: "Mariana Costa", role: "Bolsista", bio: "Bolsista CNPq, atua no desenvolvimento de materiais e vídeos tutoriais.", image: team4Img }
 ];
 
 export const grupos = [
