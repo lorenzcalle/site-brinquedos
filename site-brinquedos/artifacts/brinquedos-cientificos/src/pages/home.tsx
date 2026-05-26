@@ -301,8 +301,13 @@ export default function Home() {
       </section>
 
       {/* Vídeo Tutoriais */}
-      <section className="py-24 bg-gray-950 overflow-hidden relative">
-        <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-5" />
+      <section className="bg-gradient-to-br from-orange-500 to-orange-600 overflow-hidden relative pt-24 pb-36">
+        <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10" />
+        <div className="absolute bottom-0 left-0 right-0">
+          <svg viewBox="0 0 1440 80" preserveAspectRatio="none" className="w-full h-16 md:h-20" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="hsl(var(--primary))" />
+          </svg>
+        </div>
         <div className="container mx-auto px-4 md:px-6 relative z-10">
           <div className="flex flex-col lg:flex-row items-center gap-12">
             <motion.div
@@ -312,13 +317,13 @@ export default function Home() {
               transition={{ duration: 0.6 }}
               className="lg:w-1/2 text-white"
             >
-              <div className="inline-flex items-center gap-2 bg-orange-500/20 text-orange-400 px-4 py-2 rounded-full text-sm font-bold mb-6">
+              <div className="inline-flex items-center gap-2 bg-white/20 text-white px-4 py-2 rounded-full text-sm font-bold mb-6">
                 <PlayCircle className="h-4 w-4" /> Biblioteca gratuita
               </div>
-              <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
-                Aprenda na prática com nossos <span className="text-orange-400">Vídeo Tutoriais</span>
+              <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight text-white">
+                Aprenda na prática com nossos Vídeo Tutoriais
               </h2>
-              <p className="text-white/60 text-xl leading-relaxed mb-8">
+              <p className="text-white/85 text-xl leading-relaxed mb-8">
                 Assista passo a passo como montar cada brinquedo científico. Vídeos gravados horizontalmente, didáticos e gratuitos para estudantes e professores.
               </p>
               <div className="flex flex-wrap gap-6 mb-10">
@@ -328,14 +333,14 @@ export default function Home() {
                   { label: "Gratuitos", value: "100%" },
                 ].map(({ label, value }) => (
                   <div key={label} className="text-center">
-                    <div className="text-3xl font-black text-orange-400">{value}</div>
-                    <div className="text-white/40 text-sm font-medium">{label}</div>
+                    <div className="text-3xl font-black text-white">{value}</div>
+                    <div className="text-white/70 text-sm font-medium">{label}</div>
                   </div>
                 ))}
               </div>
               <Link
                 href="/materiais"
-                className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-2xl shadow-xl hover:-translate-y-1 transition-all"
+                className="inline-flex items-center gap-2 bg-white text-orange-500 font-bold text-lg px-8 py-4 rounded-2xl shadow-xl hover:-translate-y-1 transition-all"
               >
                 Acessar Vídeos <ArrowRight className="h-5 w-5" />
               </Link>
@@ -360,12 +365,12 @@ export default function Home() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="bg-white/5 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 border border-white/10 hover:border-orange-500/50 hover:bg-white/10 transition-all cursor-default"
+                  className="bg-white/15 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 border border-white/20 hover:bg-white/25 transition-all cursor-default"
                 >
-                  <div className="bg-orange-500/20 p-3 rounded-full">
-                    <Play className="h-6 w-6 text-orange-400" />
+                  <div className="bg-white/20 p-3 rounded-full">
+                    <Play className="h-6 w-6 text-white" />
                   </div>
-                  <span className="text-white/80 font-bold text-sm">{label}</span>
+                  <span className="text-white font-bold text-sm">{label}</span>
                 </motion.div>
               ))}
             </motion.div>
