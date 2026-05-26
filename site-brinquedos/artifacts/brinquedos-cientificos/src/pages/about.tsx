@@ -1,11 +1,19 @@
 import { Layout } from "@/components/layout";
 import { motion } from "framer-motion";
 import { Users, Microscope, Target, Heart } from "lucide-react";
+import { useEffect } from "react";
 import heroImg from "@/assets/images/hero.png";
 import videoBC from "@/assets/videos/videobrinquedos.mp4";
 import { team } from "@/lib/data";
 
 export default function About() {
+  useEffect(() => {
+    const hash = window.location.hash.slice(1);
+    if (hash) {
+      const el = document.getElementById(hash);
+      el?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, []);
   return (
     <Layout>
       <div className="bg-primary pt-20 pb-16 text-center text-white">
@@ -51,10 +59,10 @@ export default function About() {
         </div>
       </section>
 
-      <section className="py-20 bg-white">
+      <section id="o-que-sao" className="py-20 bg-white scroll-mt-4">
         <div className="container mx-auto px-4 md:px-6">
           <div className="flex flex-col lg:flex-row items-center gap-16">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
               className="lg:w-1/2 space-y-6"

@@ -69,7 +69,7 @@ export default function Home() {
             <p className="font-medium text-white/90 mb-6 leading-relaxed">
               São projetos lúdicos que ensinam conceitos complexos de forma simples, tátil e divertida.
             </p>
-            <Link href="/sobre" className="inline-flex items-center font-bold hover:underline">
+            <Link href="/sobre#o-que-sao" className="inline-flex items-center font-bold hover:underline">
               Entenda o conceito <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </motion.div>
