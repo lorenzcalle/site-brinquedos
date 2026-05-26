@@ -4,13 +4,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { supabase } from "@/lib/supabase";
 import { Layout } from "@/components/layout";
 import { useState, useRef } from "react";
-import { Plus, X, Upload, FileText } from "lucide-react";
+import { Plus, X, Upload, FileText, Loader2 } from "lucide-react";
+
+const MAX_IMAGE_MB = 5;
+const MAX_PDF_MB = 20;
 
 const schema = z.object({
   title: z.string().min(3, "Mínimo 3 caracteres"),
   description: z.string()
-  .min(20, "Descreva melhor o brinquedo")
-  .max(400, "Máximo 400 caracteres"),
+    .min(20, "Descreva melhor o brinquedo")
+    .max(400, "Máximo 400 caracteres"),
   materials: z.array(z.object({ value: z.string().min(1, "Campo obrigatório") }))
     .min(1, "Adicione ao menos um material")
     .max(6, "Máximo 6 materiais"),
@@ -28,9 +31,10 @@ export default function Submit() {
   const [sent, setSent] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [pdfError, setPdfError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [descLines, setDescLines] = useState(0);
   const imageRef = useRef<HTMLInputElement>(null);
   const pdfRef = useRef<HTMLInputElement>(null);
 
@@ -48,6 +52,11 @@ export default function Submit() {
   const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_IMAGE_MB * 1024 * 1024) {
+      setImageError(`A imagem deve ter no máximo ${MAX_IMAGE_MB}MB.`);
+      return;
+    }
+    setImageError(null);
     setImageFile(file);
     setImagePreview(URL.createObjectURL(file));
   };
@@ -55,30 +64,44 @@ export default function Submit() {
   const handlePdf = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (file.size > MAX_PDF_MB * 1024 * 1024) {
+      setPdfError(`O PDF deve ter no máximo ${MAX_PDF_MB}MB.`);
+      return;
+    }
+    setPdfError(null);
     setPdfFile(file);
   };
 
   const onSubmit = async (data: FormData) => {
-    if (!imageFile) { alert("Selecione uma imagem."); return; }
-    if (!pdfFile) { alert("Selecione o guia em PDF."); return; }
+    if (!imageFile) { setImageError("Selecione uma imagem."); return; }
+    if (!pdfFile) { setPdfError("Selecione o guia em PDF."); return; }
     setUploading(true);
 
-    const imgExt = imageFile.name.split(".").pop();
-    const imgName = `${Date.now()}.${imgExt}`;
-    const { error: imgError } = await supabase.storage.from("toy-images").upload(imgName, imageFile);
-    if (imgError) { alert("Erro ao enviar imagem."); setUploading(false); return; }
-    const { data: { publicUrl: imageUrl } } = supabase.storage.from("toy-images").getPublicUrl(imgName);
-
+    const imgName = `${Date.now()}.${imageFile.name.split(".").pop()}`;
     const pdfName = `${Date.now()}-guide.pdf`;
-    const { error: pdfError } = await supabase.storage.from("toy-guides").upload(pdfName, pdfFile);
-    if (pdfError) { alert("Erro ao enviar PDF."); setUploading(false); return; }
+
+    const [imgResult, pdfResult] = await Promise.all([
+      supabase.storage.from("toy-images").upload(imgName, imageFile),
+      supabase.storage.from("toy-guides").upload(pdfName, pdfFile),
+    ]);
+
+    if (imgResult.error || pdfResult.error) {
+      if (imgResult.data && pdfResult.error) {
+        await supabase.storage.from("toy-images").remove([imgName]);
+      }
+      setUploading(false);
+      alert("Erro ao enviar arquivos. Tente novamente.");
+      return;
+    }
+
+    const { data: { publicUrl: imageUrl } } = supabase.storage.from("toy-images").getPublicUrl(imgName);
     const { data: { publicUrl: guideUrl } } = supabase.storage.from("toy-guides").getPublicUrl(pdfName);
 
     const { error } = await supabase.from("submissions").insert([{
       title: data.title,
       description: data.description,
-      materials: data.materials.map(m => m.value).join(","),
-      concepts: data.concepts.map(c => c.value).join(","),
+      materials: data.materials.map(m => m.value),
+      concepts: data.concepts.map(c => c.value),
       concepts_description: data.concepts_description,
       author_name: data.author_name,
       author_email: data.author_email,
@@ -88,7 +111,13 @@ export default function Submit() {
 
     setUploading(false);
     if (!error) setSent(true);
-    else alert("Erro ao enviar. Tente novamente.");
+    else {
+      await Promise.all([
+        supabase.storage.from("toy-images").remove([imgName]),
+        supabase.storage.from("toy-guides").remove([pdfName]),
+      ]);
+      alert("Erro ao salvar. Tente novamente.");
+    }
   };
 
   if (sent) return (
@@ -100,6 +129,8 @@ export default function Submit() {
       </div>
     </Layout>
   );
+
+  const isBusy = isSubmitting || uploading;
 
   return (
     <Layout>
@@ -113,7 +144,9 @@ export default function Submit() {
 
           {/* Imagem */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Imagem do brinquedo</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              Imagem do brinquedo <span className="font-normal text-gray-400">(máx. {MAX_IMAGE_MB}MB — prefira foto horizontal)</span>
+            </label>
             <div
               onClick={() => imageRef.current?.click()}
               className="w-full h-56 rounded-2xl border-2 border-dashed border-gray-300 hover:border-orange-500 transition-colors cursor-pointer flex flex-col items-center justify-center overflow-hidden"
@@ -129,6 +162,7 @@ export default function Submit() {
               )}
             </div>
             <input ref={imageRef} type="file" accept=".png,.jpg,.jpeg" onChange={handleImage} className="hidden" />
+            {imageError && <p className="text-red-500 text-sm mt-1">{imageError}</p>}
           </div>
 
           {/* Nome */}
@@ -222,7 +256,7 @@ export default function Submit() {
             )}
             {errors.concepts && <p className="text-red-500 text-sm mt-1">Adicione ao menos um conceito</p>}
           </div>
-          
+
           {/* Descrição dos conceitos */}
           <div>
             <div className="flex justify-between items-center mb-1">
@@ -239,10 +273,12 @@ export default function Submit() {
             />
             {errors.concepts_description && <p className="text-red-500 text-sm mt-1">{errors.concepts_description.message}</p>}
           </div>
-        
+
           {/* PDF */}
           <div>
-            <label className="block text-sm font-bold text-gray-700 mb-2">Guia do brinquedo (PDF)</label>
+            <label className="block text-sm font-bold text-gray-700 mb-2">
+              Guia do brinquedo (PDF) <span className="font-normal text-gray-400">(máx. {MAX_PDF_MB}MB)</span>
+            </label>
             <div
               onClick={() => pdfRef.current?.click()}
               className="w-full py-6 rounded-2xl border-2 border-dashed border-gray-300 hover:border-orange-500 transition-colors cursor-pointer flex flex-col items-center justify-center gap-2"
@@ -253,6 +289,7 @@ export default function Submit() {
               </p>
             </div>
             <input ref={pdfRef} type="file" accept=".pdf" onChange={handlePdf} className="hidden" />
+            {pdfError && <p className="text-red-500 text-sm mt-1">{pdfError}</p>}
           </div>
 
           {/* Autor */}
@@ -279,9 +316,10 @@ export default function Submit() {
 
           <button
             type="submit"
-            disabled={isSubmitting || uploading}
-            className="w-full bg-orange-500 hover:bg-orange-600 text-white font-bold py-4 rounded-xl transition-colors text-lg"
+            disabled={isBusy}
+            className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-4 rounded-xl transition-colors text-lg flex items-center justify-center gap-2"
           >
+            {isBusy && <Loader2 className="h-5 w-5 animate-spin" />}
             {uploading ? "Enviando arquivos..." : isSubmitting ? "Salvando..." : "Enviar brinquedo"}
           </button>
 
