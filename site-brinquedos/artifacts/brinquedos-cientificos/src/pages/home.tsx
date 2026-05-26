@@ -1,7 +1,8 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout";
-import { ArrowRight, BookOpen, Lightbulb, Play, Microscope, TestTube, Target, Clock } from "lucide-react";
+import { ArrowRight, BookOpen, Lightbulb, Play, Microscope, TestTube, Target, PlayCircle } from "lucide-react";
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { cachifyImage } from "@/lib/utils";
@@ -299,69 +300,74 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Materiais de Apoio */}
-      <section className="py-20 bg-green-50/50">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-foreground mb-4">Materiais de Apoio</h2>
-            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Recursos gratuitos para professores, pais e alunos.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Em breve */}
+      {/* Vídeo Tutoriais */}
+      <section className="py-24 bg-gradient-to-br from-orange-500 to-orange-600 overflow-hidden relative">
+        <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10" />
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-12">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, x: -40 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: 0 }}
-              className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 opacity-60"
+              transition={{ duration: 0.6 }}
+              className="lg:w-1/2 text-white"
             >
-              <div className="bg-blue-500 text-white w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-md">
-                <BookOpen className="h-8 w-8" />
+              <div className="inline-flex items-center gap-2 bg-white/20 px-4 py-2 rounded-full text-sm font-bold mb-6">
+                <PlayCircle className="h-4 w-4" /> Biblioteca gratuita
               </div>
-              <h3 className="text-2xl font-bold mb-3">Guias de Construção</h3>
-              <p className="text-muted-foreground mb-6 text-lg">Passo a passo detalhado com fotos para montar os brinquedos em casa.</p>
-              <span className="inline-flex items-center gap-2 text-gray-400 font-bold text-sm">
-                <Clock className="h-4 w-4" /> Em breve
-              </span>
-            </motion.div>
-
-            {/* Em breve */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 opacity-60"
-            >
-              <div className="bg-green-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-md">
-                <TestTube className="h-8 w-8" />
+              <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight">
+                Aprenda na prática com nossos Vídeo Tutoriais
+              </h2>
+              <p className="text-white/85 text-xl leading-relaxed mb-8">
+                Assista passo a passo como montar cada brinquedo científico. Vídeos gravados horizontalmente, didáticos e gratuitos para estudantes e professores.
+              </p>
+              <div className="flex flex-wrap gap-6 mb-10">
+                {[
+                  { label: "Vídeos", value: "12+" },
+                  { label: "Categorias", value: "3" },
+                  { label: "Gratuitos", value: "100%" },
+                ].map(({ label, value }) => (
+                  <div key={label} className="text-center">
+                    <div className="text-3xl font-black">{value}</div>
+                    <div className="text-white/70 text-sm font-medium">{label}</div>
+                  </div>
+                ))}
               </div>
-              <h3 className="text-2xl font-bold mb-3">Planos de Aula</h3>
-              <p className="text-muted-foreground mb-6 text-lg">Materiais alinhados à BNCC para professores aplicarem em sala de aula.</p>
-              <span className="inline-flex items-center gap-2 text-gray-400 font-bold text-sm">
-                <Clock className="h-4 w-4" /> Em breve
-              </span>
-            </motion.div>
-
-            {/* Disponível */}
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.2 }}
-              className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 hover:shadow-xl transition-all"
-            >
-              <div className="bg-orange-500 text-white w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-md">
-                <Play className="h-8 w-8" />
-              </div>
-              <h3 className="text-2xl font-bold mb-3">Vídeo Tutoriais</h3>
-              <p className="text-muted-foreground mb-6 text-lg">Aprenda assistindo nossos vídeos explicativos sobre cada projeto.</p>
-              <Link href="/materiais" className="text-primary font-bold flex items-center gap-2 hover:underline">
-                Acessar Biblioteca <ArrowRight className="h-4 w-4" />
+              <Link
+                href="/materiais"
+                className="inline-flex items-center gap-2 bg-white text-orange-500 font-bold text-lg px-8 py-4 rounded-2xl shadow-xl hover:-translate-y-1 transition-all"
+              >
+                Acessar Vídeos <ArrowRight className="h-5 w-5" />
               </Link>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="lg:w-1/2 w-full grid grid-cols-2 gap-4"
+            >
+              {[
+                { label: "Montagem", color: "bg-white/20" },
+                { label: "Eletrônica", color: "bg-white/15" },
+                { label: "Física", color: "bg-white/15" },
+                { label: "Robótica", color: "bg-white/20" },
+              ].map(({ label, color }, i) => (
+                <motion.div
+                  key={label}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className={`${color} backdrop-blur-sm rounded-2xl p-6 flex flex-col items-center justify-center gap-3 border border-white/20 hover:bg-white/25 transition-colors cursor-default`}
+                >
+                  <div className="bg-white/20 p-3 rounded-full">
+                    <Play className="h-6 w-6 text-white" />
+                  </div>
+                  <span className="text-white font-bold text-sm">{label}</span>
+                </motion.div>
+              ))}
             </motion.div>
           </div>
         </div>
