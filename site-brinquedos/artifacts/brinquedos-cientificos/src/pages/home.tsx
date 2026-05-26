@@ -1,13 +1,12 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout";
-import { ArrowRight, BookOpen, Lightbulb, Play, Microscope, Users, TestTube, Target } from "lucide-react";
+import { ArrowRight, BookOpen, Lightbulb, Play, Microscope, TestTube, Target, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { cachifyImage } from "@/lib/utils";
 import { type Toy } from "@/lib/types";
 import bannerImg from "@/assets/images/banner-principal.jpg";
-import { team } from "@/lib/data";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -47,66 +46,101 @@ export default function Home() {
     <Layout>
       {/* Banner Section */}
       <section className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
-        <img
-          src={bannerImg}
-          alt="Banner Projeto Brinquedos Científicos"
-          className="w-full h-auto block"
-        />
+        <div className="relative">
+          <img
+            src={bannerImg}
+            alt="Banner Projeto Brinquedos Científicos"
+            className="w-full h-auto block"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent flex items-center">
+            <div className="container mx-auto px-6 md:px-12">
+              <motion.div
+                initial={{ opacity: 0, x: -40 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.7 }}
+                className="max-w-xl"
+              >
+                <span className="inline-block bg-white/20 text-white text-xs font-bold tracking-widest uppercase px-4 py-1 rounded-full mb-4">
+                  URI – Campus Santo Ângelo
+                </span>
+                <h1 className="text-3xl md:text-5xl font-black text-white mb-4 leading-tight">
+                  Aprender Ciência <br className="hidden md:block" />Brincando
+                </h1>
+                <p className="text-white/90 text-base md:text-lg mb-6 leading-relaxed">
+                  Brinquedos que as crianças constroem e que ensinam física, eletrônica e robótica de forma lúdica.
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  <Link href="/portfolio" className="inline-flex items-center gap-2 bg-white text-primary font-bold px-6 py-3 rounded-xl hover:-translate-y-0.5 transition-all shadow-lg">
+                    Ver Projetos <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <Link href="/sobre#o-que-sao" className="inline-flex items-center gap-2 bg-white/20 text-white font-bold px-6 py-3 rounded-xl hover:bg-white/30 transition-all">
+                    Saiba Mais
+                  </Link>
+                </div>
+              </motion.div>
+            </div>
+          </div>
+        </div>
       </section>
 
       {/* Feature Cards Section */}
-      <section className="container mx-auto px-4 md:px-6 relative z-20 -mt-4 mb-20">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
-            className="bg-red-500 rounded-2xl p-8 text-white shadow-xl hover:-translate-y-2 transition-transform duration-300"
-          >
-            <Lightbulb className="h-12 w-12 mb-6 opacity-90" />
-            <h3 className="text-2xl font-black mb-4">O que são Brinquedos Científicos?</h3>
-            <p className="font-medium text-white/90 mb-6 leading-relaxed">
-              São projetos lúdicos que ensinam conceitos complexos de forma simples, tátil e divertida.
-            </p>
-            <Link href="/sobre#o-que-sao" className="inline-flex items-center font-bold hover:underline">
-              Entenda o conceito <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </motion.div>
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4 md:px-6">
+          <div className="text-center mb-10">
+            <h2 className="text-2xl md:text-3xl font-black text-foreground">O que você encontra aqui</h2>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="bg-red-500 rounded-2xl p-8 text-white shadow-xl hover:-translate-y-2 transition-transform duration-300"
+            >
+              <Lightbulb className="h-12 w-12 mb-6 opacity-90" />
+              <h3 className="text-2xl font-black mb-4">O que são Brinquedos Científicos?</h3>
+              <p className="font-medium text-white/90 mb-6 leading-relaxed">
+                São projetos lúdicos que ensinam conceitos complexos de forma simples, tátil e divertida.
+              </p>
+              <Link href="/sobre#o-que-sao" className="inline-flex items-center font-bold hover:underline">
+                Entenda o conceito <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.2 }}
-            className="bg-orange-500 rounded-2xl p-8 text-white shadow-xl hover:-translate-y-2 transition-transform duration-300"
-          >
-            <BookOpen className="h-12 w-12 mb-6 opacity-90" />
-            <h3 className="text-2xl font-black mb-4">Guias e Atividades</h3>
-            <p className="font-medium text-white/90 mb-6 leading-relaxed">
-              Baixe nossos manuais detalhados e planos de aula para usar em casa ou na sala de aula.
-            </p>
-            <Link href="/materiais" className="inline-flex items-center font-bold hover:underline">
-              Acessar materiais <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="bg-orange-500 rounded-2xl p-8 text-white shadow-xl hover:-translate-y-2 transition-transform duration-300"
+            >
+              <BookOpen className="h-12 w-12 mb-6 opacity-90" />
+              <h3 className="text-2xl font-black mb-4">Guias e Atividades</h3>
+              <p className="font-medium text-white/90 mb-6 leading-relaxed">
+                Baixe nossos manuais detalhados e planos de aula para usar em casa ou na sala de aula.
+              </p>
+              <Link href="/materiais" className="inline-flex items-center font-bold hover:underline">
+                Acessar materiais <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: 0.3 }}
-            className="bg-yellow-500 rounded-2xl p-8 text-white shadow-xl hover:-translate-y-2 transition-transform duration-300"
-          >
-            <Target className="h-12 w-12 mb-6 opacity-90" />
-            <h3 className="text-2xl font-black mb-4">Mostra de Projetos</h3>
-            <p className="font-medium text-white/90 mb-6 leading-relaxed">
-              Explore a galeria completa dos brinquedos que já desenvolvemos e inspire-se.
-            </p>
-            <Link href="/portfolio" className="inline-flex items-center font-bold hover:underline">
-              Ver portfólio <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 50 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.3 }}
+              className="bg-yellow-500 rounded-2xl p-8 text-white shadow-xl hover:-translate-y-2 transition-transform duration-300"
+            >
+              <Target className="h-12 w-12 mb-6 opacity-90" />
+              <h3 className="text-2xl font-black mb-4">Mostra de Projetos</h3>
+              <p className="font-medium text-white/90 mb-6 leading-relaxed">
+                Explore a galeria completa dos brinquedos que já desenvolvemos e inspire-se.
+              </p>
+              <Link href="/portfolio" className="inline-flex items-center font-bold hover:underline">
+                Ver portfólio <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </motion.div>
+          </div>
         </div>
       </section>
 
@@ -135,9 +169,9 @@ export default function Home() {
                   "Desenvolvimento do pensamento crítico",
                   "Estímulo à criatividade e resolução de problemas",
                   "Acessibilidade com materiais de baixo custo",
-                  "Sistemas robóticos educacionais",
-                  "Plataformas de protótipos avançados",
-                  "Microcontroladores e sistemas de alimentação integrada"
+                  "Aprendizado prático de eletrônica e robótica",
+                  "Inclusão e protagonismo feminino na tecnologia",
+                  "Integração entre teoria e experiências concretas",
                 ].map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-lg font-medium text-foreground/80">
                     <div className="bg-accent/20 p-1.5 rounded-full text-accent">
@@ -276,60 +310,59 @@ export default function Home() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              { title: "Guias de Construção", desc: "Passo a passo detalhado com fotos para montar os brinquedos em casa.", color: "bg-blue-500", icon: <BookOpen className="h-8 w-8" /> },
-              { title: "Planos de Aula", desc: "Materiais alinhados à BNCC para professores aplicarem em sala de aula.", color: "bg-green-600", icon: <TestTube className="h-8 w-8" /> },
-              { title: "Vídeo Tutoriais", desc: "Aprenda assistindo nossos vídeos explicativos sobre cada projeto.", color: "bg-orange-500", icon: <Play className="h-8 w-8" /> }
-            ].map((item, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.2 }}
-                className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 hover:shadow-xl transition-all"
-              >
-                <div className={`${item.color} text-white w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-md`}>
-                  {item.icon}
-                </div>
-                <h3 className="text-2xl font-bold mb-3">{item.title}</h3>
-                <p className="text-muted-foreground mb-6 text-lg">{item.desc}</p>
-                <Link href="/materiais" className="text-primary font-bold flex items-center gap-2 hover:underline">
-                  Acessar Biblioteca <ArrowRight className="h-4 w-4" />
-                </Link>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
+            {/* Em breve */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0 }}
+              className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 opacity-60"
+            >
+              <div className="bg-blue-500 text-white w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-md">
+                <BookOpen className="h-8 w-8" />
+              </div>
+              <h3 className="text-2xl font-bold mb-3">Guias de Construção</h3>
+              <p className="text-muted-foreground mb-6 text-lg">Passo a passo detalhado com fotos para montar os brinquedos em casa.</p>
+              <span className="inline-flex items-center gap-2 text-gray-400 font-bold text-sm">
+                <Clock className="h-4 w-4" /> Em breve
+              </span>
+            </motion.div>
 
-      {/* Nossa Equipe */}
-      <section className="py-24 bg-white">
-        <div className="container mx-auto px-4 md:px-6">
-          <div className="text-center mb-16">
-            <div className="inline-flex items-center gap-2 text-secondary font-bold bg-secondary/10 px-4 py-2 rounded-full mb-4">
-              <Users className="h-5 w-5" /> Quem Somos
-            </div>
-            <h2 className="text-4xl md:text-5xl font-black text-foreground">Nossa Equipe</h2>
-          </div>
+            {/* Em breve */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.1 }}
+              className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 opacity-60"
+            >
+              <div className="bg-green-600 text-white w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-md">
+                <TestTube className="h-8 w-8" />
+              </div>
+              <h3 className="text-2xl font-bold mb-3">Planos de Aula</h3>
+              <p className="text-muted-foreground mb-6 text-lg">Materiais alinhados à BNCC para professores aplicarem em sala de aula.</p>
+              <span className="inline-flex items-center gap-2 text-gray-400 font-bold text-sm">
+                <Clock className="h-4 w-4" /> Em breve
+              </span>
+            </motion.div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="text-center group"
-              >
-                <div className="relative mb-6 mx-auto w-48 h-48 rounded-full overflow-hidden border-4 border-white shadow-xl group-hover:border-primary transition-colors">
-                  <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
-                </div>
-                <h3 className="text-2xl font-bold text-foreground mb-1">{member.name}</h3>
-                <p className="text-lg text-primary font-bold">{member.role}</p>
-              </motion.div>
-            ))}
+            {/* Disponível */}
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.2 }}
+              className="bg-white rounded-2xl p-8 shadow-md border border-gray-100 hover:shadow-xl transition-all"
+            >
+              <div className="bg-orange-500 text-white w-16 h-16 rounded-2xl flex items-center justify-center mb-6 shadow-md">
+                <Play className="h-8 w-8" />
+              </div>
+              <h3 className="text-2xl font-bold mb-3">Vídeo Tutoriais</h3>
+              <p className="text-muted-foreground mb-6 text-lg">Aprenda assistindo nossos vídeos explicativos sobre cada projeto.</p>
+              <Link href="/materiais" className="text-primary font-bold flex items-center gap-2 hover:underline">
+                Acessar Biblioteca <ArrowRight className="h-4 w-4" />
+              </Link>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -349,9 +382,14 @@ export default function Home() {
             <p className="text-xl md:text-2xl text-white/90 mb-10 max-w-3xl mx-auto font-medium">
               Explore nossa Mostra de Brinquedos Científicos e comece seu primeiro projeto hoje mesmo.
             </p>
-            <Link href="/portfolio" className="inline-block bg-accent hover:bg-accent/90 text-white font-bold text-xl px-10 py-5 rounded-2xl shadow-xl hover:-translate-y-1 transition-all">
-              Acessar a Mostra de Projetos
-            </Link>
+            <div className="flex flex-wrap justify-center gap-4">
+              <Link href="/portfolio" className="inline-block bg-accent hover:bg-accent/90 text-white font-bold text-xl px-10 py-5 rounded-2xl shadow-xl hover:-translate-y-1 transition-all">
+                Acessar a Mostra de Projetos
+              </Link>
+              <Link href="/equipe" className="inline-block bg-white/20 hover:bg-white/30 text-white font-bold text-xl px-10 py-5 rounded-2xl hover:-translate-y-1 transition-all">
+                Conheça a Equipe
+              </Link>
+            </div>
           </motion.div>
         </div>
       </section>
