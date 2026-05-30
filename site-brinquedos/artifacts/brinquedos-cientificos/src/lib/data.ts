@@ -30,8 +30,8 @@ export const grupos = [
     titulo: "Coordenação",
     subtitulo: "Responsáveis pela gestão e direção do projeto.",
     membros: [
-      { id: 1, nome: "Gilberto Pacheco", cargo: "Coordenador", foto: team1Img },
-      { id: 2, nome: "Ana Lima", cargo: "Educadora", foto: team2Img },
+      { id: 1, nome: "Gilberto Pacheco", cargo: "Coordenador", bio: "Docente da URI Santo Ângelo, responsável pela coordenação geral do projeto.", foto: team1Img },
+      { id: 2, nome: "Ana Lima", cargo: "Educadora", bio: "Pedagoga com foco em ciências, acompanha as atividades nas escolas parceiras.", foto: team2Img },
     ],
   },
   {
@@ -39,8 +39,7 @@ export const grupos = [
     titulo: "Professores Orientadores",
     subtitulo: "Docentes que orientam as pesquisas e atividades do projeto.",
     membros: [
-      { id: 3, nome: "Nome do Professor", cargo: "Orientador", foto: "/images/equipe/prof1.jpg" },
-      { id: 4, nome: "Nome do Professor", cargo: "Orientador", foto: "/images/equipe/prof2.jpg" },
+      { id: 3, nome: "Pedro Souza", cargo: "Orientador", bio: "Engenheiro responsável pelo desenvolvimento dos protótipos e circuitos.", foto: team3Img },
     ],
   },
   {
@@ -48,20 +47,8 @@ export const grupos = [
     titulo: "Bolsistas",
     subtitulo: "Estudantes que desenvolvem pesquisa e extensão no projeto.",
     membros: [
-      { id: 5, nome: "Lorenzo Callegaro", cargo: "Bolsista CNPq", foto: "/images/equipe/bolsista1.jpg" },
-      { id: 6, nome: "Nome do Bolsista", cargo: "Bolsista Extensão", foto: "/images/equipe/bolsista2.jpg" },
-      { id: 7, nome: "Nome do Bolsista", cargo: "Bolsista Extensão", foto: "/images/equipe/bolsista2.jpg" },
-      { id: 8, nome: "Nome do Bolsista", cargo: "Bolsista Extensão", foto: "/images/equipe/bolsista2.jpg" },
+      { id: 5, nome: "Lorenzo Callegaro", cargo: "Bolsista CNPq", bio: "Responsável pelo desenvolvimento do site e materiais digitais do projeto.", foto: team4Img },
     ],
   },
 ];
 
-export const upcomingEvents = [
-  { title: "Mostra de Inovação Escolar", date: "25 Março 2024", time: "08:00 - 17:00", location: "Colégio Estadual Central, São Paulo - SP" },
-  { title: "Oficina: Construindo seu Robô", date: "10 Abril 2024", time: "14:00 - 16:00", location: "Laboratório Maker, Universidade Federal" }
-];
-
-export const pastEvents = [
-  { title: "Feira de Ciências Regional", date: "15 Out 2023", description: "Apresentação de mais de 20 projetos desenvolvidos por alunos.", image: heroImg },
-  { title: "Semana da Física Divertida", date: "02 a 06 Set 2023", description: "Uma semana inteira dedicada a experimentos lúdicos.", image: heroImg }
-];

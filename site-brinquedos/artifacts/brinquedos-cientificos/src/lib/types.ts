@@ -4,4 +4,7 @@ export type Toy = {
   description: string;
   image: string;
   concepts: string[];
+  materials?: string[];
+  concepts_description?: string;
+  guide_url?: string;
 };

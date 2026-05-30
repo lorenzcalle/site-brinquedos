@@ -24,8 +24,14 @@ const staggerContainer = {
 
 export default function Home() {
   const [homeToys, setHomeToys] = useState<Toy[]>([]);
+  const [missionToys, setMissionToys] = useState<Toy[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  const MISSION_TOY_IDS = [
+    "803ca654-3c2f-4982-9ba5-e4681975d86a", // EcoConcha
+    "283adb6c-d7bf-46ac-91d5-446604fb8f6a", // H2SOL
+  ];
 
   useEffect(() => {
     supabase
@@ -36,7 +42,12 @@ export default function Home() {
       .then(({ data, error }) => {
         if (error) setError(true);
         else {
-          const shuffled = (data ?? []).sort(() => Math.random() - 0.5);
+          const all = data ?? [];
+          const fixed = MISSION_TOY_IDS
+            .map(id => all.find(t => t.id === id))
+            .filter(Boolean) as Toy[];
+          setMissionToys(fixed);
+          const shuffled = [...all].sort(() => Math.random() - 0.5);
           setHomeToys(shuffled.slice(0, 4));
         }
         setLoading(false);
@@ -196,10 +207,10 @@ export default function Home() {
                   <div className="rounded-2xl bg-gray-200 animate-pulse w-full h-48 md:h-64" />
                   <div className="rounded-2xl bg-gray-200 animate-pulse w-full h-48 md:h-64 mt-8" />
                 </div>
-              ) : homeToys.length >= 2 ? (
+              ) : missionToys.length >= 2 ? (
                 <div className="grid grid-cols-2 gap-4">
-                  <img src={cachifyImage(homeToys[0].image)} alt={homeToys[0].title} className="rounded-2xl shadow-lg w-full h-48 md:h-64 object-cover" />
-                  <img src={cachifyImage(homeToys[1].image)} alt={homeToys[1].title} className="rounded-2xl shadow-lg w-full h-48 md:h-64 object-cover mt-8" />
+                  <img src={cachifyImage(missionToys[0].image)} alt={missionToys[0].title} className="rounded-2xl shadow-lg w-full h-48 md:h-64 object-cover" />
+                  <img src={cachifyImage(missionToys[1].image)} alt={missionToys[1].title} className="rounded-2xl shadow-lg w-full h-48 md:h-64 object-cover mt-8" />
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-4">

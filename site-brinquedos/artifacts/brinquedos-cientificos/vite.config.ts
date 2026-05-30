@@ -32,6 +32,13 @@ export default defineConfig({
       strict: true,
       deny: ["**/.*"],
     },
+    proxy: {
+      "/img-cache": {
+        target: "https://ssreltrosmcnegmozbyf.supabase.co/storage/v1/object/public/toy-images",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/img-cache/, ""),
+      },
+    },
   },
   preview: {
     port,

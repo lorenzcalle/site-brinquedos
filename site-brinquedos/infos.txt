@@ -1,3 +1,7 @@
+TODO:
+- Vídeos dos materiais devem ser feitos horizontalmente e feito upload no YouTube quando conseguir credenciais dos Brinquedos 
+cientificos (email/senha).
+
 Atualizar site:
 pnpm --filter brinquedos-cientificos run build
 

@@ -4,7 +4,6 @@ import { Users, Microscope, Target, Heart, ArrowRight, BookOpen, Cpu, Graduation
 import { useEffect } from "react";
 import { Link } from "wouter";
 import logoURI from "@/assets/images/logo-principal.png";
-import logoCNPq from "@/assets/images/logo-cnpq.png";
 import videoBC from "@/assets/videos/videobrinquedos.mp4";
 import { team } from "@/lib/data";
 
@@ -28,13 +27,9 @@ export default function About() {
           <p className="text-xl font-medium text-white/80 max-w-2xl mx-auto mb-10">
             Conheça a história, a missão e as pessoas por trás do Brinquedos Científicos.
           </p>
-          <div className="flex items-center justify-center gap-8 flex-wrap">
+          <div className="flex items-center justify-center gap-6 flex-wrap">
             <span className="text-white/60 text-sm font-bold uppercase tracking-widest">Realização</span>
-            <img src={logoURI} alt="URI Santo Ângelo" className="h-10 object-contain brightness-0 invert opacity-90" />
-            <img src={logoCNPq} alt="CNPq" className="h-10 object-contain brightness-0 invert opacity-90" />
-            <div className="bg-white/20 px-4 py-2 rounded-lg">
-              <span className="text-white font-bold text-sm">MCTI</span>
-            </div>
+            <img src={logoURI} alt="Brinquedos Científicos" className="h-12 object-contain brightness-0 invert opacity-90" />
           </div>
         </div>
       </div>
@@ -226,9 +221,6 @@ export default function About() {
             <div className="flex flex-wrap justify-center gap-4">
               <Link href="/portfolio" className="inline-flex items-center gap-2 bg-white text-primary font-bold text-lg px-8 py-4 rounded-2xl shadow-xl hover:-translate-y-1 transition-all">
                 Ver Portfólio <ArrowRight className="h-5 w-5" />
-              </Link>
-              <Link href="/submit" className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-bold text-lg px-8 py-4 rounded-2xl transition-all hover:-translate-y-1">
-                Enviar meu Brinquedo
               </Link>
             </div>
           </motion.div>
