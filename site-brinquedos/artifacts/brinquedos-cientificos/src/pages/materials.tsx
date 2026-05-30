@@ -39,7 +39,7 @@ export default function Materiais() {
           </span>
           <h1 className="text-5xl font-black mb-4">Tutoriais em Vídeo</h1>
           <p className="text-lg text-white/85 max-w-xl mx-auto">
-            Aprenda na prática com vídeos passo a passo para montar e entender cada brinquedo científico.
+            Aqui você encontrará vídeos explicativos sobre conceitos e componentes eletrônicos utilizados nos Brinquedos Científicos, além de tutoriais passo a passo para aprender, de forma prática, como montar diferentes projetos e experimentos.
           </p>
           <div className="flex justify-center gap-12 mt-8">
             {[["12", "Vídeos"], ["3", "Categorias"], ["100%", "Gratuitos"]].map(([num, label]) => (
