@@ -17,6 +17,9 @@ export const toys = [
   { id: "robo-reciclado", title: "Robô Reciclado", description: "Robô construído com sucata, com um circuito simples para acender LEDs.", image: heroImg, concepts: ["Reciclagem", "Eletrônica Básica", "Circuitos"], materials: ["Caixas de Papelão", "LEDs", "Bateria", "Fios", "Interruptor"] }
 ];
 
+export const VIDEO_CATEGORIES = ["Montagem", "Eletrônica", "Física", "Química"];
+export const VIDEO_LEVELS = ["Iniciante", "Intermediário", "Avançado"];
+
 export const team = [
   { name: "Gilberto Pacheco", role: "Coordenador", bio: "Docente da URI Santo Ângelo, responsável pela coordenação geral do projeto.", image: team1Img },
   { name: "Ana Lima", role: "Educadora", bio: "Pedagoga com foco em ciências, acompanha as atividades nas escolas parceiras.", image: team2Img },
