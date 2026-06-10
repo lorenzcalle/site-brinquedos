@@ -13,6 +13,19 @@ import flavioImg from "@/assets/images/equipe/flavio-kiekow.jpg";
 import denilsonImg from "@/assets/images/equipe/denilson-rodrigues-da-silva.jpg";
 import leandroImg from "@/assets/images/equipe/leandro-ventura-farias.jpg";
 import karliseImg from "@/assets/images/equipe/karlise-soares-nascimento.jpg";
+import ecleiaImg from "@/assets/images/equipe/ecleia-bozata.jpg";
+import irenaImg from "@/assets/images/equipe/irena-bielohoubek.jpg";
+import luizImg from "@/assets/images/equipe/luiz-antonio-iegli.jpg";
+import alexandreImg from "@/assets/images/equipe/alexandre-preussler.jpg";
+import rosmeriImg from "@/assets/images/equipe/rosmeri-reichel.jpg";
+import vanessaImg from "@/assets/images/equipe/vanessa-aina-person.jpg";
+import patriciaImg from "@/assets/images/equipe/patricia-ritter.jpg";
+import romuloImg from "@/assets/images/equipe/romulo-madrid-de-mello.jpg";
+import amandaImg from "@/assets/images/equipe/amanda-pauletto.jpg";
+import camilaImg from "@/assets/images/equipe/camila-schieffelbein-dos-santos.jpg";
+import milenaImg from "@/assets/images/equipe/milena-costa-nascimento.jpg";
+import daianaImg from "@/assets/images/equipe/daiana-machry-ledur.jpg";
+import lorenzoImg from "@/assets/images/equipe/lorenzo-callegaro.jpg";
 
 export const toys = [
   { id: "carrinho-solar", title: "Carrinho Solar", description: "Um carrinho movido a energia solar, perfeito para ensinar sobre energias renováveis.", image: solarCarImg, concepts: ["Energia Solar", "Mecânica", "Circuitos"], materials: ["Painel Solar 5V", "Motor DC", "Rodas", "Madeira", "Fios"] },
@@ -55,11 +68,37 @@ export const grupos = [
     ],
   },
   {
-    id: "bolsistas",
-    titulo: "Bolsistas",
-    subtitulo: "Estudantes que desenvolvem pesquisa e extensão no projeto.",
+    id: "professores-bolsistas",
+    titulo: "Professores Bolsistas – Ed. Básica",
+    subtitulo: "Mentores da rede pública que integram o projeto nas escolas.",
     membros: [
-      { id: 7, nome: "Lorenzo Callegaro", cargo: "Bolsista CNPq", bio: "Responsável pelo desenvolvimento do site e materiais digitais do projeto.", foto: team4Img },
+      { id: 7, nome: "Ecléia Bozata", cargo: "Mentora", bio: "E. E. Ens. Médio Nossa Senhora do Perpétuo Socorro – Vitória das Missões.\nÁrea de atuação: Matemática", foto: ecleiaImg },
+      { id: 8, nome: "Irena Bielohoubek", cargo: "Mentora", bio: "Instituto Estadual Odão Felippe Pipi – Santo Ângelo.\nÁreas de atuação: Física, Química e Biologia", foto: irenaImg },
+      { id: 9, nome: "Luiz Antonio Iegli", cargo: "Mentor", bio: "Instituto Estadual de Educação João XXIII – Giruá.\nÁrea de atuação: Matemática", foto: luizImg },
+      { id: 10, nome: "Alexandre Preussler", cargo: "Mentor", bio: "Escola Estadual de Ensino Médio Santo Estanislau – Mato Queimado.\nÁrea de atuação: Matemática e Física", foto: alexandreImg },
+      { id: 11, nome: "Rosméri Reichel", cargo: "Mentora", bio: "Escola Estadual de Ensino Médio Henrique Sommer – Pirapó.\nÁrea de atuação: Matemática", foto: rosmeriImg },
+      { id: 12, nome: "Vanessa Aina Person", cargo: "Mentora", bio: "Escola Estadual de Ensino Médio João Przyczynski – Guarani das Missões.\nÁrea de atuação: Ciência e Biologia", foto: vanessaImg },
+      { id: 13, nome: "Patrícia Ritter", cargo: "Mentora", bio: "Escola Estadual de Ensino Médio Buriti – Santo Ângelo.\nÁrea de atuação: Matemática", foto: patriciaImg },
+    ],
+  },
+  {
+    id: "apoio-administrativo",
+    titulo: "Apoio Administrativo",
+    subtitulo: "Suporte administrativo e técnico do projeto.",
+    membros: [
+      { id: 14, nome: "Romulo Madrid de Mello", cargo: "", bio: "Área de atuação: Ciência da Computação", foto: romuloImg },
+    ],
+  },
+  {
+    id: "academicos-bolsistas",
+    titulo: "Acadêmicos Bolsistas",
+    subtitulo: "Estudantes bolsistas CNPq que desenvolvem pesquisa e extensão no projeto.",
+    membros: [
+      { id: 15, nome: "Amanda Pauletto", cargo: "Bolsista CNPq", bio: "Mentora.\nÁrea de atuação: Ciência da Computação", foto: amandaImg },
+      { id: 16, nome: "Camila Schieffelbein dos Santos", cargo: "Bolsista CNPq", bio: "Mentora.\nÁrea de atuação: Ciência da Computação", foto: camilaImg },
+      { id: 17, nome: "Milena Costa Nascimento", cargo: "Bolsista CNPq", bio: "Mentora.\nÁrea de atuação: Matemática", foto: milenaImg },
+      { id: 18, nome: "Daiana Machry Ledur", cargo: "Bolsista CNPq", bio: "Mentora.\nÁrea de atuação: Engenharia Mecânica", foto: daianaImg },
+      { id: 19, nome: "Lorenzo Callegaro", cargo: "Bolsista CNPq", bio: "Webmaster.\nÁrea de atuação: Ciência da Computação", foto: lorenzoImg },
     ],
   },
 ];
