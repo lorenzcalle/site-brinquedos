@@ -33,8 +33,8 @@ export const grupos = [
     titulo: "Coordenação",
     subtitulo: "Responsáveis pela gestão e direção do projeto.",
     membros: [
-      { id: 1, nome: "Gilberto Pacheco", cargo: "Coordenador", bio: "Docente da URI Santo Ângelo, responsável pela coordenação geral do projeto.", foto: team1Img },
-      { id: 2, nome: "Ana Lima", cargo: "Educadora", bio: "Pedagoga com foco em ciências, acompanha as atividades nas escolas parceiras.", foto: team2Img },
+      { id: 1, nome: "Cristina Paludo Santos", cargo: "Coordenadora", bio: "Docente/pesquisadora da URI Santo Ângelo. Responsável pela coordenação do projeto.\nÁrea de atuação: Ciência da Computação", foto: "" },
+      { id: 2, nome: "Rosangela Ferreira Prestes", cargo: "Coordenadora", bio: "Docente/pesquisadora da URI Santo Ângelo. Responsável pela coordenação do projeto.\nÁrea de atuação: Matemática", foto: "" },
     ],
   },
   {
@@ -42,7 +42,10 @@ export const grupos = [
     titulo: "Professores Orientadores",
     subtitulo: "Docentes que orientam as pesquisas e atividades do projeto.",
     membros: [
-      { id: 3, nome: "Pedro Souza", cargo: "Orientador", bio: "Engenheiro responsável pelo desenvolvimento dos protótipos e circuitos.", foto: team3Img },
+      { id: 3, nome: "Flávio Kiekow", cargo: "", bio: "Área de atuação: Engenharia Mecânica", foto: "" },
+      { id: 4, nome: "Denilson Rodrigues da Silva", cargo: "", bio: "Área de atuação: Ciência da Computação", foto: "" },
+      { id: 5, nome: "Leandro Ventura Farias", cargo: "", bio: "Área de atuação: Licenciatura em Computação/ Matemática", foto: "" },
+      { id: 6, nome: "Karlise Soares Nascimento", cargo: "", bio: "Área de atuação: Ciência da Computação", foto: "" },
     ],
   },
   {
@@ -50,7 +53,7 @@ export const grupos = [
     titulo: "Bolsistas",
     subtitulo: "Estudantes que desenvolvem pesquisa e extensão no projeto.",
     membros: [
-      { id: 5, nome: "Lorenzo Callegaro", cargo: "Bolsista CNPq", bio: "Responsável pelo desenvolvimento do site e materiais digitais do projeto.", foto: team4Img },
+      { id: 7, nome: "Lorenzo Callegaro", cargo: "Bolsista CNPq", bio: "Responsável pelo desenvolvimento do site e materiais digitais do projeto.", foto: team4Img },
     ],
   },
 ];

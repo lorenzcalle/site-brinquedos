@@ -24,7 +24,7 @@ function MembroCard({ membro, index }: { membro: Membro; index: number }) {
       className="text-center group"
     >
       <div className="mb-6 mx-auto w-48 h-48 rounded-full overflow-hidden border-4 border-gray-100 shadow-xl bg-primary/10 flex items-center justify-center group-hover:border-primary transition-colors duration-300">
-        {imgFailed ? (
+        {imgFailed || !membro.foto ? (
           <span className="text-3xl font-black text-primary">{iniciais}</span>
         ) : (
           <img
@@ -36,9 +36,13 @@ function MembroCard({ membro, index }: { membro: Membro; index: number }) {
         )}
       </div>
       <h3 className="text-xl font-bold text-foreground mb-1">{membro.nome}</h3>
-      <p className="text-primary font-bold text-sm mb-2">{membro.cargo}</p>
+      {membro.cargo && (
+        <p className="text-primary font-bold text-sm mb-2">{membro.cargo}</p>
+      )}
       {membro.bio && (
-        <p className="text-muted-foreground text-sm leading-relaxed px-2">{membro.bio}</p>
+        <p className="text-muted-foreground text-sm leading-relaxed px-2 whitespace-pre-line">
+          {membro.bio}
+        </p>
       )}
     </motion.div>
   );
