@@ -7,6 +7,12 @@ import team1Img from "@/assets/images/team-1.png";
 import team2Img from "@/assets/images/team-2.png";
 import team3Img from "@/assets/images/team-3.png";
 import team4Img from "@/assets/images/team-4.png";
+import cristinaImg from "@/assets/images/equipe/cristina-paludo-santos.jpg";
+import rosangelaImg from "@/assets/images/equipe/rosangela-ferreira-prestes.jpg";
+import flavioImg from "@/assets/images/equipe/flavio-kiekow.jpg";
+import denilsonImg from "@/assets/images/equipe/denilson-rodrigues-da-silva.jpg";
+import leandroImg from "@/assets/images/equipe/leandro-ventura-farias.jpg";
+import karliseImg from "@/assets/images/equipe/karlise-soares-nascimento.jpg";
 
 export const toys = [
   { id: "carrinho-solar", title: "Carrinho Solar", description: "Um carrinho movido a energia solar, perfeito para ensinar sobre energias renováveis.", image: solarCarImg, concepts: ["Energia Solar", "Mecânica", "Circuitos"], materials: ["Painel Solar 5V", "Motor DC", "Rodas", "Madeira", "Fios"] },
@@ -33,8 +39,8 @@ export const grupos = [
     titulo: "Coordenação",
     subtitulo: "Responsáveis pela gestão e direção do projeto.",
     membros: [
-      { id: 1, nome: "Cristina Paludo Santos", cargo: "Coordenadora", bio: "Docente/pesquisadora da URI Santo Ângelo. Responsável pela coordenação do projeto.\nÁrea de atuação: Ciência da Computação", foto: "" },
-      { id: 2, nome: "Rosangela Ferreira Prestes", cargo: "Coordenadora", bio: "Docente/pesquisadora da URI Santo Ângelo. Responsável pela coordenação do projeto.\nÁrea de atuação: Matemática", foto: "" },
+      { id: 1, nome: "Cristina Paludo Santos", cargo: "Coordenadora", bio: "Docente/pesquisadora da URI Santo Ângelo. Responsável pela coordenação do projeto.\nÁrea de atuação: Ciência da Computação", foto: cristinaImg },
+      { id: 2, nome: "Rosangela Ferreira Prestes", cargo: "Coordenadora", bio: "Docente/pesquisadora da URI Santo Ângelo. Responsável pela coordenação do projeto.\nÁrea de atuação: Matemática", foto: rosangelaImg },
     ],
   },
   {
@@ -42,10 +48,10 @@ export const grupos = [
     titulo: "Professores Orientadores",
     subtitulo: "Docentes que orientam as pesquisas e atividades do projeto.",
     membros: [
-      { id: 3, nome: "Flávio Kiekow", cargo: "", bio: "Área de atuação: Engenharia Mecânica", foto: "" },
-      { id: 4, nome: "Denilson Rodrigues da Silva", cargo: "", bio: "Área de atuação: Ciência da Computação", foto: "" },
-      { id: 5, nome: "Leandro Ventura Farias", cargo: "", bio: "Área de atuação: Licenciatura em Computação/ Matemática", foto: "" },
-      { id: 6, nome: "Karlise Soares Nascimento", cargo: "", bio: "Área de atuação: Ciência da Computação", foto: "" },
+      { id: 3, nome: "Flávio Kiekow", cargo: "", bio: "Área de atuação: Engenharia Mecânica", foto: flavioImg },
+      { id: 4, nome: "Denilson Rodrigues da Silva", cargo: "", bio: "Área de atuação: Ciência da Computação", foto: denilsonImg },
+      { id: 5, nome: "Leandro Ventura Farias", cargo: "", bio: "Área de atuação: Licenciatura em Computação/ Matemática", foto: leandroImg },
+      { id: 6, nome: "Karlise Soares Nascimento", cargo: "", bio: "Área de atuação: Ciência da Computação", foto: karliseImg },
     ],
   },
   {
