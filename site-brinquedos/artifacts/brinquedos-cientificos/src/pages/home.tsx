@@ -5,7 +5,7 @@ import { ArrowRight, BookOpen, Lightbulb, Play, Microscope, TestTube, Target, Pl
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { cachifyImage } from "@/lib/utils";
+import { cachifyImage, videoThumb } from "@/lib/utils";
 import { type Toy } from "@/lib/types";
 import bannerImg from "@/assets/images/banner-principal.jpg";
 
@@ -22,11 +22,31 @@ const staggerContainer = {
   }
 };
 
+type VideoRow = { id: string; title: string; video_url: string; category: string | null };
+
+// Posição/tamanho de cada vídeo no coverflow conforme a distância (em passos) do centro.
+const COVER_POS = [
+  { x: 0,   scale: 1,    opacity: 1,    z: 40 }, // centro (em foco)
+  { x: 58,  scale: 0.72, opacity: 0.6,  z: 30 },
+  { x: 104, scale: 0.5,  opacity: 0.28, z: 20 },
+  { x: 145, scale: 0.4,  opacity: 0,    z: 10 }, // entra/sai invisível nas bordas
+];
+
+// Distância circular (com sinal) de i até o índice em foco, p/ loop infinito.
+function ringOffset(i: number, current: number, n: number) {
+  let d = (((i - current) % n) + n) % n;
+  if (d > n / 2) d -= n;
+  return d;
+}
+
 export default function Home() {
   const [homeToys, setHomeToys] = useState<Toy[]>([]);
   const [missionToys, setMissionToys] = useState<Toy[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [videos, setVideos] = useState<VideoRow[]>([]);
+  const [vIndex, setVIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
 
   const MISSION_TOY_IDS = [
     "803ca654-3c2f-4982-9ba5-e4681975d86a", // EcoConcha
@@ -52,7 +72,22 @@ export default function Home() {
         }
         setLoading(false);
       });
+
+    supabase
+      .from("materials")
+      .select("id, title, video_url, category")
+      .order("created_at", { ascending: false })
+      .then(({ data }) => setVideos((data as VideoRow[]) ?? []));
   }, []);
+
+  // Avança o coverflow sozinho (pausa no hover).
+  useEffect(() => {
+    if (paused || videos.length < 2) return;
+    const t = setInterval(() => setVIndex((i) => (i + 1) % videos.length), 2800);
+    return () => clearInterval(t);
+  }, [paused, videos.length]);
+
+  const videoCats = [...new Set(videos.map((v) => v.category).filter(Boolean))] as string[];
 
   return (
     <Layout>
@@ -64,34 +99,6 @@ export default function Home() {
             alt="Banner Projeto Brinquedos Científicos"
             className="w-full h-auto block"
           />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-transparent flex items-center">
-            <div className="container mx-auto px-6 md:px-12">
-              <motion.div
-                initial={{ opacity: 0, x: -40 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.7 }}
-                className="max-w-xl"
-              >
-                <span className="inline-block bg-white/20 text-white text-xs font-bold tracking-widest uppercase px-4 py-1 rounded-full mb-4">
-                  URI – Campus Santo Ângelo
-                </span>
-                <h1 className="text-3xl md:text-5xl font-black text-white mb-4 leading-tight">
-                  Aprender Ciência <br className="hidden md:block" />Brincando
-                </h1>
-                <p className="text-white/90 text-base md:text-lg mb-6 leading-relaxed">
-                  Brinquedos que as crianças constroem e que ensinam física, eletrônica e robótica de forma lúdica.
-                </p>
-                <div className="flex flex-wrap gap-3">
-                  <Link href="/portfolio" className="inline-flex items-center gap-2 bg-white text-primary font-bold px-6 py-3 rounded-xl hover:-translate-y-0.5 transition-all shadow-lg">
-                    Ver Projetos <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <Link href="/sobre#o-que-sao" className="inline-flex items-center gap-2 bg-white/20 text-white font-bold px-6 py-3 rounded-xl hover:bg-white/30 transition-all">
-                    Saiba Mais
-                  </Link>
-                </div>
-              </motion.div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -127,7 +134,7 @@ export default function Home() {
               className="bg-orange-500 rounded-2xl p-8 text-white shadow-xl hover:-translate-y-2 transition-transform duration-300"
             >
               <BookOpen className="h-12 w-12 mb-6 opacity-90" />
-              <h3 className="text-2xl font-black mb-4">Guias e Atividades</h3>
+              <h3 className="text-2xl font-black mb-4">Materiais de Apoio</h3>
               <p className="font-medium text-white/90 mb-6 leading-relaxed">
                 Baixe nossos manuais detalhados e planos de aula para usar em casa ou na sala de aula.
               </p>
@@ -335,12 +342,12 @@ export default function Home() {
                 Aprenda na prática com nossos Vídeo Tutoriais
               </h2>
               <p className="text-white/85 text-xl leading-relaxed mb-8">
-                Assista passo a passo como montar cada brinquedo científico. Vídeos gravados horizontalmente, didáticos e gratuitos para estudantes e professores.
+                Do conceito ao protótipo: acompanhe o desenvolvimento, o design e a montagem dos brinquedos científicos, passo a passo. Vídeos didáticos e gratuitos para estudantes e professores.
               </p>
               <div className="flex flex-wrap gap-6 mb-10">
                 {[
-                  { label: "Vídeos", value: "12+" },
-                  { label: "Categorias", value: "3" },
+                  { label: "Vídeos", value: videos.length ? String(videos.length) : "—" },
+                  { label: "Categorias", value: videoCats.length ? String(videoCats.length) : "—" },
                   { label: "Gratuitos", value: "100%" },
                 ].map(({ label, value }) => (
                   <div key={label} className="text-center">
@@ -362,28 +369,54 @@ export default function Home() {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="lg:w-1/2 w-full grid grid-cols-2 gap-4"
+              className="lg:w-1/2 w-full"
             >
-              {[
-                { label: "Montagem" },
-                { label: "Eletrônica" },
-                { label: "Física" },
-                { label: "Robótica" },
-              ].map(({ label }, i) => (
-                <motion.div
-                  key={label}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.1 }}
-                  className="bg-white/15 rounded-2xl p-6 flex flex-col items-center justify-center gap-3 border border-white/20 hover:bg-white/25 transition-all cursor-default"
-                >
-                  <div className="bg-white/20 p-3 rounded-full">
-                    <Play className="h-6 w-6 text-white" />
-                  </div>
-                  <span className="text-white font-bold text-sm">{label}</span>
-                </motion.div>
-              ))}
+              <div
+                className="relative h-64 sm:h-72 md:h-80 w-full"
+                onMouseEnter={() => setPaused(true)}
+                onMouseLeave={() => setPaused(false)}
+              >
+                {videos.map((v, i) => {
+                  const off = ringOffset(i, vIndex, videos.length);
+                  if (Math.abs(off) > 3) return null;
+                  const p = COVER_POS[Math.abs(off)];
+                  const sign = off > 0 ? 1 : off < 0 ? -1 : 0;
+                  const thumb = videoThumb(v.video_url);
+                  return (
+                    <div
+                      key={v.id}
+                      className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60%]"
+                      style={{ zIndex: p.z }}
+                    >
+                      <motion.div
+                        animate={{ x: `${p.x * sign}%`, scale: p.scale, opacity: p.opacity }}
+                        transition={{ type: "spring", stiffness: 200, damping: 28 }}
+                      >
+                        <Link href="/materiais" className="block group" aria-label={v.title}>
+                          <div className="aspect-video rounded-2xl overflow-hidden shadow-2xl bg-orange-900/40 relative ring-1 ring-white/20">
+                            {thumb && (
+                              <img
+                                src={thumb}
+                                alt={v.title}
+                                className="w-full h-full object-cover"
+                                onError={(e) => { e.currentTarget.style.display = "none"; }}
+                              />
+                            )}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/15 group-hover:bg-black/25 transition-colors">
+                              <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                <Play className="h-5 w-5 text-orange-500 ml-0.5" />
+                              </div>
+                            </div>
+                            <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/75 to-transparent px-3 pt-6 pb-2.5">
+                              <span className="text-white text-xs font-bold line-clamp-1">{v.title}</span>
+                            </div>
+                          </div>
+                        </Link>
+                      </motion.div>
+                    </div>
+                  );
+                })}
+              </div>
             </motion.div>
           </div>
         </div>

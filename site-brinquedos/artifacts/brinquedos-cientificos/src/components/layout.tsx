@@ -153,7 +153,6 @@ export function Footer() {
             <ul className="space-y-2 text-gray-300">
               <li><Link href="/equipe" className="hover:text-white transition-colors">Equipe</Link></li>
               <li><Link href="/eventos" className="hover:text-white transition-colors">Eventos</Link></li>
-              <li><a href="#" className="hover:text-white transition-colors">Guias de Construção</a></li>
               <li><a href="#" className="hover:text-white transition-colors">Vídeo Tutoriais</a></li>
             </ul>
           </div>
@@ -167,7 +166,7 @@ export function Footer() {
               </li>
               <li className="flex items-start gap-3">
                 <MessageCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span>contato@brinquedoscientificos.com.br</span>
+                <span>bc@san.uri.br</span>
               </li>
             </ul>
           </div>

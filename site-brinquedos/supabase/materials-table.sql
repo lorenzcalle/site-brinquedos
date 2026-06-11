@@ -7,9 +7,9 @@ create table if not exists public.materials (
   id          uuid default gen_random_uuid() primary key,
   title       text not null,
   description text,
-  category    text,           -- Montagem / Eletrônica / Física
+  category    text,           -- Montagem / Eletrônica / Física / Química / Desenvolvimento de Produto / Oficina de Design
   level       text,           -- Iniciante / Intermediário / Avançado
-  video_url   text not null,  -- link do YouTube
+  video_url   text not null,  -- link do YouTube ou do Google Drive
   created_at  timestamptz default now()
 );
 

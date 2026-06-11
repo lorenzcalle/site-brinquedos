@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { Layout } from "@/components/layout";
 import { useToast } from "@/hooks/use-toast";
 import { type Toy } from "@/lib/types";
-import { youtubeId, youtubeThumb } from "@/lib/utils";
+import { videoThumb, isVideoUrl } from "@/lib/utils";
 import { VIDEO_CATEGORIES, VIDEO_LEVELS } from "@/lib/data";
 import { Trash2, Loader2, LogOut, FileText, Check, X, Pencil, RotateCcw, Plus, Video } from "lucide-react";
 
@@ -264,8 +264,8 @@ export default function Admin() {
       toast({ title: "Preencha título e link do vídeo", variant: "destructive" });
       return;
     }
-    if (!youtubeId(matForm.video_url)) {
-      toast({ title: "Link do YouTube inválido", description: "Cole um link como https://youtu.be/...", variant: "destructive" });
+    if (!isVideoUrl(matForm.video_url)) {
+      toast({ title: "Link de vídeo inválido", description: "Cole um link do YouTube (https://youtu.be/...) ou do Google Drive (https://drive.google.com/file/d/...).", variant: "destructive" });
       return;
     }
     setSavingMat(true);
@@ -492,11 +492,11 @@ export default function Admin() {
                 {materials.length === 0 ? (
                   <p className="text-gray-500 text-center py-16">Nenhum vídeo cadastrado ainda.</p>
                 ) : materials.map(mat => {
-                  const vid = youtubeId(mat.video_url);
+                  const thumb = videoThumb(mat.video_url);
                   return (
                     <div key={mat.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 flex gap-4 items-center">
                       <div className="w-28 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
-                        {vid ? <img src={youtubeThumb(vid)} alt={mat.title} className="w-full h-full object-cover" /> : <Video className="h-6 w-6 text-gray-400" />}
+                        {thumb ? <img src={thumb} alt={mat.title} className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = "none"; }} /> : <Video className="h-6 w-6 text-gray-400" />}
                       </div>
                       <div className="flex-1 min-w-0">
                         <h2 className="text-base font-bold truncate">{mat.title}</h2>
@@ -571,10 +571,10 @@ export default function Admin() {
                 <input value={matForm.title} onChange={e => setMatForm({ ...matForm, title: e.target.value })} placeholder="Ex: Como montar o Carrinho Solar" className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-orange-500 outline-none transition-colors" />
               </div>
               <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Link do YouTube</label>
-                <input value={matForm.video_url} onChange={e => setMatForm({ ...matForm, video_url: e.target.value })} placeholder="https://youtu.be/..." className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-orange-500 outline-none transition-colors" />
-                {matForm.video_url && youtubeId(matForm.video_url) && (
-                  <img src={youtubeThumb(youtubeId(matForm.video_url)!)} alt="prévia" className="mt-3 w-40 rounded-lg" />
+                <label className="block text-sm font-bold text-gray-700 mb-1">Link do vídeo <span className="font-normal text-gray-400">(YouTube ou Google Drive)</span></label>
+                <input value={matForm.video_url} onChange={e => setMatForm({ ...matForm, video_url: e.target.value })} placeholder="https://youtu.be/... ou https://drive.google.com/file/d/..." className="w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-orange-500 outline-none transition-colors" />
+                {matForm.video_url && videoThumb(matForm.video_url) && (
+                  <img src={videoThumb(matForm.video_url)!} alt="prévia" className="mt-3 w-40 rounded-lg" onError={e => { e.currentTarget.style.display = "none"; }} />
                 )}
               </div>
               <div>

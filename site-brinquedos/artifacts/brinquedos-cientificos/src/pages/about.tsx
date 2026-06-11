@@ -1,11 +1,15 @@
 import { Layout } from "@/components/layout";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Users, Microscope, Target, Heart, ArrowRight, BookOpen, Cpu, GraduationCap } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "wouter";
 import logoURI from "@/assets/images/logo-principal.png";
 import videoBC from "@/assets/videos/videobrinquedos.mp4";
-import { team } from "@/lib/data";
+import { grupos } from "@/lib/data";
+
+// Todos os integrantes (achatados dos grupos) p/ o carrossel rotativo da equipe.
+const ALL_MEMBERS = grupos.flatMap((g) => g.membros);
+const VISIBLE = 4;
 
 export default function About() {
   useEffect(() => {
@@ -14,6 +18,30 @@ export default function About() {
       const el = document.getElementById(hash);
       el?.scrollIntoView({ behavior: "smooth" });
     }
+  }, []);
+
+  // Carrossel da equipe: 4 cards; a cada intervalo um deles troca pelo próximo
+  // integrante, percorrendo toda a equipe em loop.
+  const [slots, setSlots] = useState(() =>
+    Array.from({ length: VISIBLE }, (_, k) => k % ALL_MEMBERS.length)
+  );
+  const nextRef = useRef({ member: VISIBLE % ALL_MEMBERS.length, slot: 0 });
+
+  useEffect(() => {
+    if (ALL_MEMBERS.length <= VISIBLE) return;
+    const t = setInterval(() => {
+      setSlots((prev) => {
+        const { member, slot } = nextRef.current;
+        const copy = [...prev];
+        copy[slot] = member;
+        nextRef.current = {
+          member: (member + 1) % ALL_MEMBERS.length,
+          slot: (slot + 1) % VISIBLE,
+        };
+        return copy;
+      });
+    }, 2600);
+    return () => clearInterval(t);
   }, []);
 
   return (
@@ -182,23 +210,36 @@ export default function About() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
-            {team.map((member, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="text-center group"
-              >
-                <div className="mb-5 mx-auto w-48 h-48 rounded-full overflow-hidden border-4 border-gray-100 shadow-xl group-hover:border-primary transition-colors duration-300">
-                  <img src={member.image} alt={member.name} className="w-full h-full object-cover" />
+            {slots.map((memberIdx, slot) => {
+              const member = ALL_MEMBERS[memberIdx];
+              return (
+                <div key={slot} className="text-center min-h-[20rem]">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={member.id}
+                      initial={{ opacity: 0, y: 16, scale: 0.95 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -16, scale: 0.95 }}
+                      transition={{ duration: 0.45 }}
+                      className="group"
+                    >
+                      <div className="mb-5 mx-auto w-48 h-48 rounded-full overflow-hidden border-4 border-gray-100 shadow-xl group-hover:border-primary transition-colors duration-300">
+                        <img src={member.foto} alt={member.nome} className="w-full h-full object-cover" />
+                      </div>
+                      <h3 className="text-xl font-bold text-foreground mb-1">{member.nome}</h3>
+                      {member.cargo && <p className="text-primary font-bold text-sm mb-2">{member.cargo}</p>}
+                      <p className="text-muted-foreground text-sm leading-relaxed px-2 line-clamp-3 whitespace-pre-line">{member.bio}</p>
+                    </motion.div>
+                  </AnimatePresence>
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-1">{member.name}</h3>
-                <p className="text-primary font-bold text-sm mb-2">{member.role}</p>
-                <p className="text-muted-foreground text-sm leading-relaxed px-2">{member.bio}</p>
-              </motion.div>
-            ))}
+              );
+            })}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link href="/equipe" className="inline-flex items-center gap-2 text-secondary font-bold hover:gap-3 transition-all">
+              Conheça toda a equipe <ArrowRight className="h-5 w-5" />
+            </Link>
           </div>
         </div>
       </section>

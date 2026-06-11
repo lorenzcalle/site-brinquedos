@@ -3,7 +3,7 @@ import { Play, X, Video } from "lucide-react";
 import { motion } from "framer-motion";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import { youtubeId, youtubeThumb, youtubeEmbed } from "@/lib/utils";
+import { videoThumb, videoEmbed } from "@/lib/utils";
 import { VIDEO_CATEGORIES } from "@/lib/data";
 
 type Material = {
@@ -113,7 +113,7 @@ export default function Materiais() {
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filtered.map((item, i) => {
-                  const vid = youtubeId(item.video_url);
+                  const thumb = videoThumb(item.video_url);
                   return (
                     <motion.div
                       key={item.id}
@@ -125,7 +125,7 @@ export default function Materiais() {
                       className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:-translate-y-1 transition-transform cursor-pointer group"
                     >
                       <div className="aspect-video bg-gray-900 relative overflow-hidden">
-                        {vid && <img src={youtubeThumb(vid)} alt={item.title} className="w-full h-full object-cover" />}
+                        {thumb && <img src={thumb} alt={item.title} className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = "none"; }} />}
                         <div className="absolute inset-0 flex items-center justify-center bg-black/10 group-hover:bg-black/20 transition-colors">
                           <div className="w-14 h-14 rounded-full bg-white/90 flex items-center justify-center group-hover:scale-110 transition-transform">
                             <Play className="h-6 w-6 text-orange-500 ml-1" />
@@ -137,7 +137,7 @@ export default function Materiais() {
                           <p className="text-xs font-bold text-orange-500 uppercase tracking-wide mb-1">{item.category}</p>
                         )}
                         <h3 className="text-base font-bold text-gray-900 mb-2">{item.title}</h3>
-                        {item.description && <p className="text-sm text-gray-400 mb-3 line-clamp-2">{item.description}</p>}
+                        {item.description && <p className="text-sm text-gray-400 mb-3 line-clamp-3">{item.description}</p>}
                         {item.level && (
                           <span className={`text-xs font-semibold px-3 py-1 rounded-full ${levelColors[item.level] ?? "bg-gray-100 text-gray-600"}`}>
                             {item.level}
@@ -154,7 +154,7 @@ export default function Materiais() {
       </section>
 
       {/* Player modal */}
-      {playing && youtubeId(playing.video_url) && (
+      {playing && videoEmbed(playing.video_url) && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4" onClick={() => setPlaying(null)}>
           <div className="w-full max-w-3xl" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-3">
@@ -165,7 +165,7 @@ export default function Materiais() {
             </div>
             <div className="aspect-video rounded-xl overflow-hidden shadow-2xl">
               <iframe
-                src={`${youtubeEmbed(youtubeId(playing.video_url)!)}?autoplay=1`}
+                src={videoEmbed(playing.video_url)!}
                 title={playing.title}
                 className="w-full h-full"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

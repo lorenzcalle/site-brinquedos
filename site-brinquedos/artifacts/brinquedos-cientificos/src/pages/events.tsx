@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 type Event = {
   id: string;
   title: string;
-  date: string;
+  date?: string | null;
   time?: string;
   location?: string;
   description?: string;
@@ -16,8 +16,15 @@ type Event = {
   type: "upcoming" | "past";
 };
 
-function formatDate(dateStr: string) {
-  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(new Date(dateStr));
+// A coluna `date` é NOT NULL; eventos com data a confirmar usam esta data-placeholder,
+// que a UI exibe como "A definir" (manter em sincronia com seed-evento.mjs).
+const TBD_DATE = "2099-12-31";
+
+function formatDate(dateStr?: string | null) {
+  if (!dateStr || dateStr === TBD_DATE) return "A definir";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "A definir";
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(d);
 }
 
 export default function Events() {
