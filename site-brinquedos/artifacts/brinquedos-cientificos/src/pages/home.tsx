@@ -339,10 +339,10 @@ export default function Home() {
                 <PlayCircle className="h-4 w-4" /> Biblioteca gratuita
               </div>
               <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight text-white">
-                Aprenda na prática com nossos Vídeo Tutoriais
+                Aprenda com nossos vídeos
               </h2>
               <p className="text-white/85 text-xl leading-relaxed mb-8">
-                Do conceito ao protótipo: acompanhe o desenvolvimento, o design e a montagem dos brinquedos científicos, passo a passo. Vídeos didáticos e gratuitos para estudantes e professores.
+                Explore os materiais disponíveis em nossa Biblioteca e aprenda mais sobre design, desenvolvimento de produtos, componentes eletrônicos e muito mais.
               </p>
               <div className="flex flex-wrap gap-6 mb-10">
                 {[
