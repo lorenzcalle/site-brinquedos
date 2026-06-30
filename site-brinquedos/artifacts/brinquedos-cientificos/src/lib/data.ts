@@ -36,7 +36,7 @@ export const toys = [
   { id: "robo-reciclado", title: "Robô Reciclado", description: "Robô construído com sucata, com um circuito simples para acender LEDs.", image: heroImg, concepts: ["Reciclagem", "Eletrônica Básica", "Circuitos"], materials: ["Caixas de Papelão", "LEDs", "Bateria", "Fios", "Interruptor"] }
 ];
 
-export const VIDEO_CATEGORIES = ["Montagem", "Eletrônica", "Física", "Química", "Desenvolvimento de Produto", "Oficina de Design"];
+export const VIDEO_CATEGORIES = ["Montagem", "Eletrônica", "Impressão 3D", "Desenvolvimento de Produto", "Oficina de Design"];
 export const VIDEO_LEVELS = ["Iniciante", "Intermediário", "Avançado"];
 
 export const team = [

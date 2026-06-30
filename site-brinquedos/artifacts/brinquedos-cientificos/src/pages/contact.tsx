@@ -7,7 +7,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import emailjs from "@emailjs/browser";
 
-// ─── EmailJS – configure em https://emailjs.com ───────────────────────────────
+// ─── EmailJS – https://emailjs.com ───────────────────────────────
 const EMAILJS_SERVICE_ID  = "service_aetz69c";
 const EMAILJS_TEMPLATE_ID = "template_rmd1rhf";
 const EMAILJS_PUBLIC_KEY  = "AIP6sUf5Bw20cC5hD";
