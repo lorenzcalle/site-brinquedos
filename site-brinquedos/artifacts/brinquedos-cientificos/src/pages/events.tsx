@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout";
 import { motion } from "framer-motion";
-import { Calendar, Clock, MapPin, CalendarX } from "lucide-react";
+import { Calendar, Clock, MapPin, CalendarX, Ticket, ArrowRight, Hourglass } from "lucide-react";
 import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -20,11 +20,99 @@ type Event = {
 // que a UI exibe como "A definir" (manter em sincronia com seed-evento.mjs).
 const TBD_DATE = "2099-12-31";
 
+// Eventos com formulário de inscrição externo (link específico por título do evento).
+// Havendo link aqui, o botão "Inscrever-se" abre o formulário; senão, vai para /contato.
+const REGISTRATION_LINKS: Record<string, string> = {
+  "Mostra Missioneira de Brinquedos Científicos":
+    "https://san.uri.br/eventos/mostra_missioneira_brinquedos_cientificos2026/inscricao.php",
+};
+
 function formatDate(dateStr?: string | null) {
   if (!dateStr || dateStr === TBD_DATE) return "A definir";
   const d = new Date(dateStr);
   if (isNaN(d.getTime())) return "A definir";
-  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric" }).format(d);
+  // timeZone "UTC": a coluna é um `date` (sem hora); sem isso, "2026-10-08" vira meia-noite
+  // UTC e, no fuso do Brasil (UTC−3), seria exibido como o dia 07. Fixar em UTC mostra o dia certo.
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" }).format(d);
+}
+
+// Quebra a data (em UTC, mesmo motivo do formatDate) em dia/mês/ano para o "bloco de data".
+function dateParts(dateStr?: string | null) {
+  if (!dateStr || dateStr === TBD_DATE) return null;
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return null;
+  const fmt = (opts: Intl.DateTimeFormatOptions) =>
+    new Intl.DateTimeFormat("pt-BR", { ...opts, timeZone: "UTC" }).format(d);
+  return { day: fmt({ day: "2-digit" }), month: fmt({ month: "short" }).replace(".", ""), year: fmt({ year: "numeric" }) };
+}
+
+// Banner de destaque para o evento principal (com inscrição aberta).
+function FeaturedEventBanner({ ev }: { ev: Event }) {
+  const dp = dateParts(ev.date);
+  const registrationUrl = REGISTRATION_LINKS[ev.title];
+  const eventMs = ev.date && ev.date !== TBD_DATE ? new Date(ev.date).getTime() : null;
+  const daysLeft = eventMs ? Math.ceil((eventMs - Date.now()) / 86_400_000) : null;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.4 }}
+      className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-secondary to-orange-600 text-white shadow-xl"
+    >
+      <div className="absolute top-0 right-0 w-72 h-72 rounded-full bg-white/10 -translate-y-1/3 translate-x-1/3" />
+      <div className="absolute bottom-0 left-0 w-56 h-56 rounded-full bg-white/5 translate-y-1/3 -translate-x-1/4" />
+
+      <div className="relative z-10 p-8 md:p-10">
+        <div className="flex flex-wrap items-center gap-3 mb-6">
+          <span className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm font-bold">
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-300 opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400" />
+            </span>
+            Inscrições abertas
+          </span>
+          <span className="inline-flex items-center gap-2 bg-green-600 text-white rounded-full px-4 py-1.5 text-sm font-bold">
+            <Ticket className="h-4 w-4" /> Entrada gratuita
+          </span>
+        </div>
+
+        <div className="flex flex-col md:flex-row md:items-center gap-8">
+          <div className="flex-1">
+            <h3 className="text-3xl md:text-4xl font-black leading-tight mb-4">{ev.title}</h3>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-white/90 font-semibold mb-4">
+              {daysLeft !== null && daysLeft >= 0 && (
+                <span className="flex items-center gap-2"><Hourglass className="h-5 w-5" /> {daysLeft === 0 ? "É hoje!" : `Faltam ${daysLeft} dias`}</span>
+              )}
+              {ev.time && <span className="flex items-center gap-2"><Clock className="h-5 w-5" /> {ev.time}</span>}
+              {ev.location && <span className="flex items-center gap-2"><MapPin className="h-5 w-5" /> {ev.location}</span>}
+            </div>
+            {ev.description && <p className="text-white/85 leading-relaxed max-w-xl">{ev.description}</p>}
+          </div>
+
+          <div className="flex flex-col items-center gap-5 shrink-0 w-full md:w-auto">
+            {dp && (
+              <div className="bg-white text-secondary rounded-2xl px-8 py-4 text-center shadow-lg leading-none">
+                <div className="text-5xl font-black">{dp.day}</div>
+                <div className="text-lg font-black uppercase tracking-wide mt-1">{dp.month}</div>
+                <div className="text-sm font-bold text-secondary/60 mt-1">{dp.year}</div>
+              </div>
+            )}
+            {registrationUrl && (
+              <a
+                href={registrationUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full inline-flex items-center justify-center gap-2 bg-white text-secondary hover:bg-orange-50 font-black py-3 px-8 rounded-xl transition-colors shadow-lg"
+              >
+                Inscrever-se <ArrowRight className="h-5 w-5" />
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
 }
 
 export default function Events() {
@@ -78,6 +166,9 @@ export default function Events() {
           ) : (
             <div className="space-y-6">
               {upcoming.map((ev, i) => (
+                REGISTRATION_LINKS[ev.title] ? (
+                  <FeaturedEventBanner key={ev.id} ev={ev} />
+                ) : (
                 <motion.div
                   key={ev.id}
                   initial={{ opacity: 0, x: -20 }}
@@ -99,12 +190,27 @@ export default function Events() {
                         {ev.time && <div className="flex items-center gap-2"><Clock className="h-5 w-5 text-secondary" /> {ev.time}</div>}
                         {ev.location && <div className="flex items-center gap-2"><MapPin className="h-5 w-5 text-secondary" /> {ev.location}</div>}
                       </div>
+                      {ev.description && (
+                        <p className="mt-4 text-orange-900/90 leading-relaxed max-w-2xl">{ev.description}</p>
+                      )}
                     </div>
-                    <Link href="/contato" className="w-full md:w-auto bg-secondary hover:bg-secondary/90 text-white font-bold py-3 px-8 rounded-xl transition-colors shrink-0 text-center">
-                      Inscrever-se
-                    </Link>
+                    {REGISTRATION_LINKS[ev.title] ? (
+                      <a
+                        href={REGISTRATION_LINKS[ev.title]}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full md:w-auto bg-secondary hover:bg-secondary/90 text-white font-bold py-3 px-8 rounded-xl transition-colors shrink-0 text-center"
+                      >
+                        Inscrever-se
+                      </a>
+                    ) : (
+                      <Link href="/contato" className="w-full md:w-auto bg-secondary hover:bg-secondary/90 text-white font-bold py-3 px-8 rounded-xl transition-colors shrink-0 text-center">
+                        Inscrever-se
+                      </Link>
+                    )}
                   </div>
                 </motion.div>
+                )
               ))}
             </div>
           )}
