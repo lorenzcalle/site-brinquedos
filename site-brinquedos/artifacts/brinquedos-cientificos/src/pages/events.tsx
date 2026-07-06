@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout";
 import { motion } from "framer-motion";
-import { Calendar, Clock, MapPin, CalendarX, Ticket, ArrowRight, Hourglass } from "lucide-react";
+import { Calendar, Clock, MapPin, CalendarX, Ticket, ArrowRight, Hourglass, FileText, Download, Image as ImageIcon, Youtube, CalendarDays } from "lucide-react";
 import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -26,6 +26,29 @@ const REGISTRATION_LINKS: Record<string, string> = {
   "Mostra Missioneira de Brinquedos Científicos":
     "https://san.uri.br/eventos/mostra_missioneira_brinquedos_cientificos2026/inscricao.php",
 };
+
+// Materiais para as escolas participantes da Mostra. `null` = ainda não disponível
+// ("Em breve"). Ao receber o arquivo, colocar em public/downloads/ e apontar o caminho aqui.
+const MOSTRA_DOWNLOADS: {
+  regulamento: string | null;
+  fichaDoc: string | null;
+  fichaPdf: string | null;
+  bannerModelo: string | null;
+  videoNaoListado: string | null; // vídeo da Camila (YouTube): como subir vídeo "não listado"
+} = {
+  regulamento: null, // colocar regulamento-mostra-bc-2026.pdf em public/downloads/ e apontar aqui
+  fichaDoc: "/downloads/ficha-catalografica-brinquedo-cientifico.docx",
+  fichaPdf: null, // colocar ficha-catalografica-brinquedo-cientifico.pdf em public/downloads/ e apontar aqui
+  bannerModelo: null,
+  videoNaoListado: null, // link do vídeo da Camila (YouTube)
+};
+
+// Datas importantes da Mostra (exibidas em texto) — cronograma oficial do Regulamento (Seção 7).
+const MOSTRA_DATAS: { label: string; data: string }[] = [
+  { label: "Lançamento do Regulamento", data: "02/06/2026" },
+  { label: "Inscrição das equipes", data: "15/06/2026 a 18/09/2026" },
+  { label: "Realização da Mostra, divulgação dos resultados e cerimônia de premiação", data: "08/10/2026" },
+];
 
 function formatDate(dateStr?: string | null) {
   if (!dateStr || dateStr === TBD_DATE) return "A definir";
@@ -112,6 +135,128 @@ function FeaturedEventBanner({ ev }: { ev: Event }) {
         </div>
       </div>
     </motion.div>
+  );
+}
+
+// Botão de download; quando o arquivo ainda não existe (href null), mostra "Em breve".
+function DownloadButton({ href, label, sub }: { href: string | null; label: string; sub?: string }) {
+  if (!href) {
+    return (
+      <span className="inline-flex items-center gap-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 text-gray-400 font-bold py-3 px-5 cursor-not-allowed">
+        <FileText className="h-5 w-5" />
+        <span className="flex flex-col leading-tight text-left">
+          {label}
+          <span className="text-xs font-semibold text-gray-400">Em breve</span>
+        </span>
+      </span>
+    );
+  }
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="inline-flex items-center gap-2 rounded-xl bg-secondary hover:bg-secondary/90 text-white font-bold py-3 px-5 transition-colors shadow-sm"
+    >
+      <Download className="h-5 w-5" />
+      <span className="flex flex-col leading-tight text-left">
+        {label}
+        {sub && <span className="text-xs font-semibold text-white/80">{sub}</span>}
+      </span>
+    </a>
+  );
+}
+
+// Seção de materiais para as escolas participantes da Mostra (regulamento, ficha,
+// banner, datas e vídeo de apoio). Renderizada só quando a Mostra está nos próximos eventos.
+function MostraEscolas() {
+  return (
+    <section className="py-20 bg-orange-50 border-y border-orange-100">
+      <div className="container mx-auto px-4 md:px-6">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.4 }}
+          className="max-w-4xl mx-auto"
+        >
+          <h2 className="text-3xl font-black text-foreground mb-4 border-b-4 border-secondary pb-2 inline-block">
+            Para as escolas participantes
+          </h2>
+          <p className="text-lg text-foreground/80 leading-relaxed mb-8">
+            As escolas participantes devem consultar o <strong className="text-foreground">Regulamento</strong> da
+            Mostra e entregar o <strong className="text-foreground">Modelo de Ficha Catalográfica</strong> no
+            momento da inscrição.
+          </p>
+
+          {/* Datas importantes */}
+          <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-6 mb-8">
+            <h3 className="flex items-center gap-2 text-xl font-black text-foreground mb-4">
+              <CalendarDays className="h-6 w-6 text-secondary" /> Datas importantes
+            </h3>
+            <ul className="space-y-2">
+              {MOSTRA_DATAS.map((d) => (
+                <li key={d.label} className="flex flex-wrap items-baseline gap-x-2 text-foreground/90">
+                  <span className="font-bold">{d.label}:</span>
+                  <span>{d.data}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Downloads */}
+          <div className="grid gap-6 sm:grid-cols-2">
+            {/* Regulamento */}
+            <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-6">
+              <h3 className="text-lg font-black text-foreground mb-1">Regulamento</h3>
+              <p className="text-sm text-foreground/70 mb-4">Regras completas da Mostra para as escolas participantes.</p>
+              <DownloadButton href={MOSTRA_DOWNLOADS.regulamento} label="Baixar regulamento" sub="PDF" />
+            </div>
+
+            {/* Ficha catalográfica */}
+            <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-6">
+              <h3 className="text-lg font-black text-foreground mb-1">Modelo de Ficha Catalográfica</h3>
+              <p className="text-sm text-foreground/70 mb-4">Deve ser entregue no momento da inscrição.</p>
+              <div className="flex flex-wrap gap-3">
+                <DownloadButton href={MOSTRA_DOWNLOADS.fichaDoc} label="Baixar ficha" sub="DOCX" />
+                <DownloadButton href={MOSTRA_DOWNLOADS.fichaPdf} label="Baixar ficha" sub="PDF" />
+              </div>
+            </div>
+
+            {/* Modelo de banner */}
+            <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-6">
+              <h3 className="flex items-center gap-2 text-lg font-black text-foreground mb-1">
+                <ImageIcon className="h-5 w-5 text-secondary" /> Modelo de banner
+              </h3>
+              <p className="text-sm text-foreground/70 mb-4">Modelo para a confecção do banner de apresentação.</p>
+              <DownloadButton href={MOSTRA_DOWNLOADS.bannerModelo} label="Baixar modelo" />
+            </div>
+
+            {/* Vídeo de apoio (Camila) */}
+            <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-6">
+              <h3 className="flex items-center gap-2 text-lg font-black text-foreground mb-1">
+                <Youtube className="h-5 w-5 text-secondary" /> Vídeo de apoio
+              </h3>
+              {MOSTRA_DOWNLOADS.videoNaoListado ? (
+                <a
+                  href={MOSTRA_DOWNLOADS.videoNaoListado}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-secondary font-semibold hover:underline"
+                >
+                  Aprenda a enviar um vídeo como "não listado" no YouTube e copiar o link para compartilhamento.
+                </a>
+              ) : (
+                <p className="text-sm text-foreground/70">
+                  Aprenda a enviar um vídeo como "não listado" no YouTube e copiar o link para compartilhamento.
+                  <span className="block mt-1 text-xs font-semibold text-gray-400">Em breve</span>
+                </p>
+              )}
+            </div>
+          </div>
+        </motion.div>
+      </div>
+    </section>
   );
 }
 
@@ -216,6 +361,9 @@ export default function Events() {
           )}
         </div>
       </section>
+
+      {/* Materiais para as escolas participantes da Mostra */}
+      {!loading && upcoming.some(e => REGISTRATION_LINKS[e.title]) && <MostraEscolas />}
 
       {/* Eventos Passados */}
       <section className="py-20 bg-gray-50">

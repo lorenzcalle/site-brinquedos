@@ -59,7 +59,7 @@ export default function Portfolio() {
         <div className="container mx-auto px-4">
           <h1 className="text-5xl font-black mb-4">Portfólio de Projetos</h1>
           <p className="text-xl font-medium text-white/90 max-w-2xl mx-auto">
-            Explore nossa coleção completa de brinquedos científicos e descubra a ciência na prática.
+            Explore nossa coleção de brinquedos científicos.
           </p>
         </div>
       </div>

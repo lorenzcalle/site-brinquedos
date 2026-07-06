@@ -3,7 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Users, Microscope, Target, Heart, ArrowRight, BookOpen, Cpu, GraduationCap } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { Link } from "wouter";
-import logoURI from "@/assets/images/logo-principal.png";
+import logoURI from "@/assets/images/logo-uri.jpg";
+import logoCNPq from "@/assets/images/logo-cnpq.png";
+import logoMCTI from "@/assets/images/logo-mcti.jpg";
+import logoPop from "@/assets/images/logo-pop.jpg";
 import videoBC from "@/assets/videos/videobrinquedos.mp4";
 import { grupos } from "@/lib/data";
 
@@ -52,15 +55,48 @@ export default function About() {
         <div className="absolute bottom-0 left-0 w-48 h-48 rounded-full bg-white/5 translate-y-1/2 -translate-x-1/2" />
         <div className="container mx-auto px-4 relative z-10">
           <h1 className="text-5xl font-black mb-4">Sobre o Projeto</h1>
-          <p className="text-xl font-medium text-white/80 max-w-2xl mx-auto mb-10">
+          <p className="text-xl font-medium text-white/80 max-w-2xl mx-auto">
             Conheça a história, a missão e as pessoas por trás do Brinquedos Científicos.
           </p>
-          <div className="flex items-center justify-center gap-6 flex-wrap">
-            <span className="text-white/60 text-sm font-bold uppercase tracking-widest">Realização</span>
-            <img src={logoURI} alt="Brinquedos Científicos" className="h-12 object-contain brightness-0 invert opacity-90" />
-          </div>
         </div>
       </div>
+
+      {/* Realização e Apoio */}
+      <section className="py-12 bg-white border-b border-gray-100">
+        <div className="container mx-auto px-4">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-10 md:gap-16">
+            {/* Realização */}
+            <div className="flex flex-col items-center gap-4">
+              <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">Realização</span>
+              <div className="flex items-center justify-center h-20 px-6 rounded-xl bg-white border border-gray-100 shadow-sm">
+                <img src={logoURI} alt="URI – Campus Santo Ângelo" className="max-h-14 w-auto object-contain" />
+              </div>
+            </div>
+
+            {/* Divisor */}
+            <div className="hidden md:block w-px self-stretch bg-gray-200" />
+
+            {/* Apoio */}
+            <div className="flex flex-col items-center gap-4">
+              <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">Apoio</span>
+              <div className="flex items-center justify-center gap-4 flex-wrap">
+                {[
+                  { src: logoCNPq, alt: "CNPq" },
+                  { src: logoMCTI, alt: "Ministério da Ciência, Tecnologia e Inovação (MCTI)" },
+                  { src: logoPop, alt: "PopCiência" },
+                ].map((logo) => (
+                  <div
+                    key={logo.alt}
+                    className="flex items-center justify-center h-20 px-5 rounded-xl bg-white border border-gray-100 shadow-sm"
+                  >
+                    <img src={logo.src} alt={logo.alt} className="max-h-12 w-auto object-contain" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Do que se trata */}
       <section className="py-20 bg-blue-50">

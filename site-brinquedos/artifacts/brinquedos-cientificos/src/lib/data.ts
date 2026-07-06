@@ -52,7 +52,7 @@ export const grupos = [
     titulo: "Coordenação",
     subtitulo: "Responsáveis pela gestão e direção do projeto.",
     membros: [
-      { id: 1, nome: "Cristina Paludo Santos", cargo: "Coordenadora", bio: "Docente/pesquisadora da URI Santo Ângelo. Responsável pela coordenação do projeto.\nÁrea de atuação: Ciência da Computação", foto: cristinaImg },
+      { id: 1, nome: "Cristina Paludo Santos", cargo: "Idealizadora e Coordenadora", bio: "Docente/pesquisadora da URI Santo Ângelo. Responsável pela coordenação do projeto.\nÁrea de atuação: Ciência da Computação", foto: cristinaImg },
       { id: 2, nome: "Rosangela Ferreira Prestes", cargo: "Coordenadora", bio: "Docente/pesquisadora da URI Santo Ângelo. Responsável pela coordenação do projeto.\nÁrea de atuação: Matemática", foto: rosangelaImg },
     ],
   },

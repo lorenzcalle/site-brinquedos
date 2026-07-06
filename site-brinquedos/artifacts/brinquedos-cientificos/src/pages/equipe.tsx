@@ -77,7 +77,7 @@ export default function Equipe() {
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed">
               O <strong className="text-foreground">Projeto Brinquedos Científicos</strong> é resultado do trabalho dedicado de
-              professores, pesquisadores e estudantes da URI que acreditam no poder da educação científica
+              professores, pesquisadores e estudantes da URI e de professores da Educação Básica que acreditam no poder da educação científica
               para transformar realidades. Nossa equipe reúne diferentes formações e olhares, unidos pelo
               mesmo compromisso: levar ciência de qualidade para dentro e fora da universidade, com
               criatividade, rigor e muita vontade de fazer diferença.
