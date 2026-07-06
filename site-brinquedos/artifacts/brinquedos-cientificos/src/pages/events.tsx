@@ -36,9 +36,9 @@ const MOSTRA_DOWNLOADS: {
   bannerModelo: string | null;
   videoNaoListado: string | null; // vídeo da Camila (YouTube): como subir vídeo "não listado"
 } = {
-  regulamento: null, // colocar regulamento-mostra-bc-2026.pdf em public/downloads/ e apontar aqui
+  regulamento: "/downloads/regulamento-mostra-bc-2026.pdf",
   fichaDoc: "/downloads/ficha-catalografica-brinquedo-cientifico.docx",
-  fichaPdf: null, // colocar ficha-catalografica-brinquedo-cientifico.pdf em public/downloads/ e apontar aqui
+  fichaPdf: "/downloads/ficha-catalografica-brinquedo-cientifico.pdf",
   bannerModelo: null,
   videoNaoListado: null, // link do vídeo da Camila (YouTube)
 };
