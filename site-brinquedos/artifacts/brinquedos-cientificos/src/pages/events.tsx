@@ -40,7 +40,7 @@ const MOSTRA_DOWNLOADS: {
   fichaDoc: "/downloads/ficha-catalografica-brinquedo-cientifico.docx",
   fichaPdf: "/downloads/ficha-catalografica-brinquedo-cientifico.pdf",
   bannerModelo: null,
-  videoNaoListado: null, // link do vídeo da Camila (YouTube)
+  videoNaoListado: "https://drive.google.com/file/d/1KvpWkyOfSJmPykjQsMxnIH0idOO09YwA/view", // vídeo da Camila (Google Drive)
 };
 
 // Datas importantes da Mostra (exibidas em texto) — cronograma oficial do Regulamento (Seção 7).
