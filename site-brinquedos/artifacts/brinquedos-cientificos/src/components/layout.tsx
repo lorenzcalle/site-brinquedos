@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Atom, Menu, X, Facebook, Instagram, Youtube, Phone, MessageCircle } from "lucide-react";
+import { Atom, Menu, X, Globe, Instagram, Youtube, Phone, MessageCircle } from "lucide-react";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoImg from "@/assets/images/logo-principal.png";
@@ -126,10 +126,10 @@ export function Footer() {
               Aprender ciência brincando e criando! Um projeto dedicado à educação e inovação.
             </p>
             <div className="flex gap-4">
-              <a href="#" className="bg-white/10 p-2 rounded-full hover:bg-primary transition-colors">
-                <Facebook className="h-5 w-5" />
+              <a href="https://san.uri.br/sites/site_novo/" target="_blank" rel="noopener noreferrer" aria-label="Site da URI" className="bg-white/10 p-2 rounded-full hover:bg-primary transition-colors">
+                <Globe className="h-5 w-5" />
               </a>
-              <a href="#" className="bg-white/10 p-2 rounded-full hover:bg-primary transition-colors">
+              <a href="https://www.instagram.com/brinquecienciauri/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="bg-white/10 p-2 rounded-full hover:bg-primary transition-colors">
                 <Instagram className="h-5 w-5" />
               </a>
               <a href="#" className="bg-white/10 p-2 rounded-full hover:bg-primary transition-colors">
@@ -153,7 +153,7 @@ export function Footer() {
             <ul className="space-y-2 text-gray-300">
               <li><Link href="/equipe" className="hover:text-white transition-colors">Equipe</Link></li>
               <li><Link href="/eventos" className="hover:text-white transition-colors">Eventos</Link></li>
-              <li><a href="#" className="hover:text-white transition-colors">Vídeo Tutoriais</a></li>
+              <li><Link href="/contato" className="hover:text-white transition-colors">Contato</Link></li>
             </ul>
           </div>
 

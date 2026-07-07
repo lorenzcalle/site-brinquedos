@@ -68,9 +68,7 @@ export default function About() {
             {/* Realização */}
             <div className="flex flex-col items-center gap-4">
               <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">Realização</span>
-              <div className="flex items-center justify-center h-20 px-6 rounded-xl bg-white border border-gray-100 shadow-sm">
-                <img src={logoURI} alt="URI – Campus Santo Ângelo" className="max-h-14 w-auto object-contain" />
-              </div>
+              <img src={logoURI} alt="URI – Campus Santo Ângelo" className="h-24 w-auto object-contain" />
             </div>
 
             {/* Divisor */}
@@ -79,18 +77,17 @@ export default function About() {
             {/* Apoio */}
             <div className="flex flex-col items-center gap-4">
               <span className="text-gray-400 text-xs font-bold uppercase tracking-widest">Apoio</span>
-              <div className="flex items-center justify-center gap-4 flex-wrap">
+              <div className="flex items-center justify-center gap-6 md:gap-8 flex-wrap">
+                {/* CNPq: o arquivo é uma faixa larga (CNPq + MCTI + Governo Federal);
+                    recortamos para mostrar só a parte do CNPq. Ajuste a largura (px) se precisar. */}
+                <div className="h-16 overflow-hidden flex items-center" style={{ width: 144 }}>
+                  <img src={logoCNPq} alt="CNPq" className="h-16 max-w-none object-left" />
+                </div>
                 {[
-                  { src: logoCNPq, alt: "CNPq" },
                   { src: logoMCTI, alt: "Ministério da Ciência, Tecnologia e Inovação (MCTI)" },
                   { src: logoPop, alt: "PopCiência" },
                 ].map((logo) => (
-                  <div
-                    key={logo.alt}
-                    className="flex items-center justify-center h-20 px-5 rounded-xl bg-white border border-gray-100 shadow-sm"
-                  >
-                    <img src={logo.src} alt={logo.alt} className="max-h-12 w-auto object-contain" />
-                  </div>
+                  <img key={logo.alt} src={logo.src} alt={logo.alt} className="h-20 w-auto object-contain" />
                 ))}
               </div>
             </div>

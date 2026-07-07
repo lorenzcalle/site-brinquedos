@@ -98,7 +98,7 @@ export const grupos = [
       { id: 16, nome: "Camila Schieffelbein dos Santos", cargo: "Bolsista CNPq", bio: "Mentora.\nÁrea de atuação: Ciência da Computação", foto: camilaImg },
       { id: 17, nome: "Milena Costa Nascimento", cargo: "Bolsista CNPq", bio: "Mentora.\nÁrea de atuação: Matemática", foto: milenaImg },
       { id: 18, nome: "Daiana Machry Ledur", cargo: "Bolsista CNPq", bio: "Mentora.\nÁrea de atuação: Engenharia Mecânica", foto: daianaImg },
-      { id: 19, nome: "Lorenzo Callegaro", cargo: "Bolsista CNPq", bio: "Webmaster.\nÁrea de atuação: Ciência da Computação", foto: lorenzoImg },
+      { id: 19, nome: "Lorenzo Callegaro da Silva", cargo: "Bolsista CNPq", bio: "Webmaster.\nÁrea de atuação: Ciência da Computação", foto: lorenzoImg },
     ],
   },
 ];

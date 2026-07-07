@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout";
 import { motion } from "framer-motion";
-import { Calendar, Clock, MapPin, CalendarX, Ticket, ArrowRight, Hourglass, FileText, Download, Image as ImageIcon, Youtube, CalendarDays } from "lucide-react";
+import { Calendar, Clock, MapPin, CalendarX, Ticket, ArrowRight, Hourglass, FileText, Download, Image as ImageIcon, Youtube, CalendarDays, ClipboardList } from "lucide-react";
 import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -25,6 +25,12 @@ const TBD_DATE = "2099-12-31";
 const REGISTRATION_LINKS: Record<string, string> = {
   "Mostra Missioneira de Brinquedos Científicos":
     "https://san.uri.br/eventos/mostra_missioneira_brinquedos_cientificos2026/inscricao.php",
+};
+
+// Prazo final de inscrição por evento (YYYY-MM-DD). A contagem regressiva do banner
+// usa esta data (o que é acionável ao lado do "Inscrever-se"), não a data do evento.
+const REGISTRATION_DEADLINES: Record<string, string> = {
+  "Mostra Missioneira de Brinquedos Científicos": "2026-09-18",
 };
 
 // Materiais para as escolas participantes da Mostra. `null` = ainda não disponível
@@ -75,6 +81,13 @@ function FeaturedEventBanner({ ev }: { ev: Event }) {
   const registrationUrl = REGISTRATION_LINKS[ev.title];
   const eventMs = ev.date && ev.date !== TBD_DATE ? new Date(ev.date).getTime() : null;
   const daysLeft = eventMs ? Math.ceil((eventMs - Date.now()) / 86_400_000) : null;
+  // Prazo de inscrição: conta até o fim do dia (23:59 no fuso do Brasil, UTC−3).
+  const deadlineStr = REGISTRATION_DEADLINES[ev.title];
+  const deadlineMs = deadlineStr ? new Date(`${deadlineStr}T23:59:59-03:00`).getTime() : null;
+  const daysToDeadline = deadlineMs ? Math.ceil((deadlineMs - Date.now()) / 86_400_000) : null;
+  const deadlineFmt = deadlineStr
+    ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }).format(new Date(deadlineStr))
+    : null;
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -104,9 +117,14 @@ function FeaturedEventBanner({ ev }: { ev: Event }) {
           <div className="flex-1">
             <h3 className="text-3xl md:text-4xl font-black leading-tight mb-4">{ev.title}</h3>
             <div className="flex flex-wrap gap-x-6 gap-y-2 text-white/90 font-semibold mb-4">
-              {daysLeft !== null && daysLeft >= 0 && (
+              {daysToDeadline !== null && daysToDeadline >= 0 ? (
+                <span className="flex items-center gap-2">
+                  <Hourglass className="h-5 w-5" />
+                  Inscrições até {deadlineFmt}{daysToDeadline === 0 ? " · último dia!" : ` · faltam ${daysToDeadline} dias`}
+                </span>
+              ) : daysLeft !== null && daysLeft >= 0 ? (
                 <span className="flex items-center gap-2"><Hourglass className="h-5 w-5" /> {daysLeft === 0 ? "É hoje!" : `Faltam ${daysLeft} dias`}</span>
-              )}
+              ) : null}
               {ev.time && <span className="flex items-center gap-2"><Clock className="h-5 w-5" /> {ev.time}</span>}
               {ev.location && <span className="flex items-center gap-2"><MapPin className="h-5 w-5" /> {ev.location}</span>}
             </div>
@@ -189,69 +207,100 @@ function MostraEscolas() {
             momento da inscrição.
           </p>
 
-          {/* Datas importantes */}
-          <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-6 mb-8">
-            <h3 className="flex items-center gap-2 text-xl font-black text-foreground mb-4">
-              <CalendarDays className="h-6 w-6 text-secondary" /> Datas importantes
-            </h3>
-            <ul className="space-y-2">
+          {/* Datas importantes — destaque */}
+          <div className="bg-white rounded-2xl border-2 border-secondary/20 shadow-md overflow-hidden mb-8">
+            <div className="flex items-center gap-3 bg-gradient-to-r from-secondary to-orange-600 text-white px-6 py-4">
+              <CalendarDays className="h-7 w-7" />
+              <h3 className="text-xl md:text-2xl font-black">Datas importantes</h3>
+            </div>
+            <ul className="divide-y divide-orange-100">
               {MOSTRA_DATAS.map((d) => (
-                <li key={d.label} className="flex flex-wrap items-baseline gap-x-2 text-foreground/90">
-                  <span className="font-bold">{d.label}:</span>
-                  <span>{d.data}</span>
+                <li
+                  key={d.label}
+                  className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-5 px-6 py-4 hover:bg-orange-50/60 transition-colors"
+                >
+                  <span className="inline-flex items-center justify-center shrink-0 rounded-xl bg-secondary text-white font-black text-base md:text-lg px-4 py-2 shadow-sm whitespace-nowrap self-start sm:self-auto">
+                    {d.data}
+                  </span>
+                  <span className="text-foreground font-bold text-base md:text-lg leading-snug">{d.label}</span>
                 </li>
               ))}
             </ul>
           </div>
 
-          {/* Downloads */}
+          {/* Downloads — cada material em destaque */}
           <div className="grid gap-6 sm:grid-cols-2">
             {/* Regulamento */}
-            <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-6">
-              <h3 className="text-lg font-black text-foreground mb-1">Regulamento</h3>
-              <p className="text-sm text-foreground/70 mb-4">Regras completas da Mostra para as escolas participantes.</p>
-              <DownloadButton href={MOSTRA_DOWNLOADS.regulamento} label="Baixar regulamento" sub="PDF" />
+            <div className="group bg-white rounded-2xl border border-orange-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all p-6">
+              <div className="flex items-start gap-4">
+                <div className="shrink-0 h-12 w-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-black text-foreground mb-1">Regulamento</h3>
+                  <p className="text-sm text-foreground/70 mb-4">Regras completas da Mostra para as escolas participantes.</p>
+                  <DownloadButton href={MOSTRA_DOWNLOADS.regulamento} label="Baixar regulamento" sub="PDF" />
+                </div>
+              </div>
             </div>
 
             {/* Ficha catalográfica */}
-            <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-6">
-              <h3 className="text-lg font-black text-foreground mb-1">Modelo de Ficha Catalográfica</h3>
-              <p className="text-sm text-foreground/70 mb-4">Deve ser entregue no momento da inscrição.</p>
-              <div className="flex flex-wrap gap-3">
-                <DownloadButton href={MOSTRA_DOWNLOADS.fichaDoc} label="Baixar ficha" sub="DOCX" />
-                <DownloadButton href={MOSTRA_DOWNLOADS.fichaPdf} label="Baixar ficha" sub="PDF" />
+            <div className="group bg-white rounded-2xl border border-orange-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all p-6">
+              <div className="flex items-start gap-4">
+                <div className="shrink-0 h-12 w-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
+                  <ClipboardList className="h-6 w-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-black text-foreground mb-1">Modelo de Ficha Catalográfica</h3>
+                  <p className="text-sm text-foreground/70 mb-4">Deve ser entregue no momento da inscrição.</p>
+                  <div className="flex flex-wrap gap-3">
+                    <DownloadButton href={MOSTRA_DOWNLOADS.fichaDoc} label="Baixar ficha" sub="DOCX" />
+                    <DownloadButton href={MOSTRA_DOWNLOADS.fichaPdf} label="Baixar ficha" sub="PDF" />
+                  </div>
+                </div>
               </div>
             </div>
 
             {/* Modelo de banner */}
-            <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-6">
-              <h3 className="flex items-center gap-2 text-lg font-black text-foreground mb-1">
-                <ImageIcon className="h-5 w-5 text-secondary" /> Modelo de banner
-              </h3>
-              <p className="text-sm text-foreground/70 mb-4">Modelo para a confecção do banner de apresentação.</p>
-              <DownloadButton href={MOSTRA_DOWNLOADS.bannerModelo} label="Baixar modelo" />
+            <div className="group bg-white rounded-2xl border border-orange-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all p-6">
+              <div className="flex items-start gap-4">
+                <div className="shrink-0 h-12 w-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
+                  <ImageIcon className="h-6 w-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-black text-foreground mb-1">Modelo de banner</h3>
+                  <p className="text-sm text-foreground/70 mb-4">Modelo para a confecção do banner de apresentação.</p>
+                  <DownloadButton href={MOSTRA_DOWNLOADS.bannerModelo} label="Baixar modelo" />
+                </div>
+              </div>
             </div>
 
             {/* Vídeo de apoio (Camila) */}
-            <div className="bg-white rounded-2xl border border-orange-100 shadow-sm p-6">
-              <h3 className="flex items-center gap-2 text-lg font-black text-foreground mb-1">
-                <Youtube className="h-5 w-5 text-secondary" /> Vídeo de apoio
-              </h3>
-              {MOSTRA_DOWNLOADS.videoNaoListado ? (
-                <a
-                  href={MOSTRA_DOWNLOADS.videoNaoListado}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-secondary font-semibold hover:underline"
-                >
-                  Aprenda a enviar um vídeo como "não listado" no YouTube e copiar o link para compartilhamento.
-                </a>
-              ) : (
-                <p className="text-sm text-foreground/70">
-                  Aprenda a enviar um vídeo como "não listado" no YouTube e copiar o link para compartilhamento.
-                  <span className="block mt-1 text-xs font-semibold text-gray-400">Em breve</span>
-                </p>
-              )}
+            <div className="group bg-white rounded-2xl border border-orange-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all p-6">
+              <div className="flex items-start gap-4">
+                <div className="shrink-0 h-12 w-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
+                  <Youtube className="h-6 w-6" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-lg font-black text-foreground mb-1">Vídeo de apoio</h3>
+                  {MOSTRA_DOWNLOADS.videoNaoListado ? (
+                    <a
+                      href={MOSTRA_DOWNLOADS.videoNaoListado}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-sm text-secondary font-semibold hover:underline"
+                    >
+                      <ArrowRight className="h-4 w-4 shrink-0" />
+                      Aprenda a enviar um vídeo como "não listado" no YouTube e copiar o link para compartilhamento.
+                    </a>
+                  ) : (
+                    <p className="text-sm text-foreground/70">
+                      Aprenda a enviar um vídeo como "não listado" no YouTube e copiar o link para compartilhamento.
+                      <span className="block mt-1 text-xs font-semibold text-gray-400">Em breve</span>
+                    </p>
+                  )}
+                </div>
+              </div>
             </div>
           </div>
         </motion.div>
