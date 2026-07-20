@@ -4,6 +4,7 @@ import { Calendar, Clock, MapPin, CalendarX, Ticket, ArrowRight, Hourglass, File
 import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 type Event = {
   id: string;
@@ -48,6 +49,18 @@ const MOSTRA_DOWNLOADS: {
   bannerModelo: null,
   videoNaoListado: "https://drive.google.com/file/d/1KvpWkyOfSJmPykjQsMxnIH0idOO09YwA/view", // vídeo da Camila (Google Drive)
 };
+
+// Registros (fotos e vídeos) dos eventos passados, por título do evento.
+// - `fotos`: imagens servidas pelo próprio site — colocar em public/eventos/<slug>/ e
+//   apontar o caminho aqui. Aparecem como miniaturas que ampliam ao clicar.
+// - `album`: link da pasta do evento no Drive → botão "Confira as fotos e vídeos".
+// Evento sem entrada aqui (ou com os dois vazios) simplesmente não mostra registros.
+// Exemplo:
+//   "Brinquedos Científicos na ExpoFavela 2025": {
+//     fotos: ["/eventos/expofavela-2025/01.jpg", "/eventos/expofavela-2025/02.jpg"],
+//     album: "https://drive.google.com/drive/folders/<id-da-subpasta-do-evento>",
+//   },
+const EVENT_MEDIA: Record<string, { fotos?: string[]; album?: string }> = {};
 
 // Datas importantes da Mostra (exibidas em texto) — cronograma oficial do Regulamento (Seção 7).
 const MOSTRA_DATAS: { label: string; data: string }[] = [
@@ -309,6 +322,51 @@ function MostraEscolas() {
   );
 }
 
+// Registros de um evento passado: miniaturas (ampliam ao clicar) + link do álbum completo.
+function EventRegistros({ title }: { title: string }) {
+  const [ampliada, setAmpliada] = useState<string | null>(null);
+  const media = EVENT_MEDIA[title];
+  if (!media || (!media.fotos?.length && !media.album)) return null;
+
+  return (
+    <div className="mt-4 pt-4 border-t border-gray-100">
+      {!!media.fotos?.length && (
+        <div className="flex flex-wrap gap-2 mb-3">
+          {media.fotos.map((src) => (
+            <button
+              key={src}
+              type="button"
+              onClick={() => setAmpliada(src)}
+              className="h-16 w-16 rounded-lg overflow-hidden border border-gray-200 hover:border-secondary transition-colors"
+            >
+              <img src={src} alt={`Foto de ${title}`} loading="lazy" className="h-full w-full object-cover" />
+            </button>
+          ))}
+        </div>
+      )}
+      {media.album && (
+        <a
+          href={media.album}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-sm font-bold text-secondary hover:underline"
+        >
+          <ImageIcon className="h-4 w-4" /> Confira as fotos e vídeos <ArrowRight className="h-4 w-4" />
+        </a>
+      )}
+
+      <Dialog open={!!ampliada} onOpenChange={(aberto) => !aberto && setAmpliada(null)}>
+        <DialogContent className="max-w-4xl p-2 bg-black/95 border-0">
+          <DialogTitle className="sr-only">Foto de {title}</DialogTitle>
+          {ampliada && (
+            <img src={ampliada} alt={`Foto de ${title}`} className="w-full max-h-[80vh] object-contain rounded-lg" />
+          )}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
 export default function Events() {
   const [upcoming, setUpcoming] = useState<Event[]>([]);
   const [past, setPast] = useState<Event[]>([]);
@@ -446,10 +504,17 @@ export default function Events() {
                       <img src={ev.image_url} alt={ev.title} className="w-full h-full object-cover grayscale opacity-80 hover:grayscale-0 hover:opacity-100 transition-all" />
                     </div>
                   )}
-                  <div className="p-6">
+                  <div className="p-6 flex-1">
                     <div className="text-sm font-bold text-gray-500 mb-2">{formatDate(ev.date)}</div>
                     <h3 className="text-xl font-bold text-foreground mb-3">{ev.title}</h3>
+                    {(ev.time || ev.location) && (
+                      <div className="flex flex-wrap gap-x-5 gap-y-1 text-sm font-medium text-gray-600 mb-3">
+                        {ev.time && <span className="flex items-center gap-1.5"><Clock className="h-4 w-4 text-gray-400" /> {ev.time}</span>}
+                        {ev.location && <span className="flex items-center gap-1.5"><MapPin className="h-4 w-4 text-gray-400" /> {ev.location}</span>}
+                      </div>
+                    )}
                     {ev.description && <p className="text-muted-foreground">{ev.description}</p>}
+                    <EventRegistros title={ev.title} />
                   </div>
                 </motion.div>
               ))}
