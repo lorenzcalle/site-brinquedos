@@ -51,8 +51,13 @@ const MOSTRA_DOWNLOADS: {
 };
 
 // Caminhos das fotos de um evento, numeradas de 1 a n em public/fotos-eventos/<slug>/:
-// `1-mini.jpg` (miniatura, ~400px) e `1.jpg` (ampliada no lightbox, ~1600px). Servir a
+// `1-mini.jpg` (miniatura, 400x225) e `1.jpg` (ampliada no lightbox, 1600x900). Servir a
 // versão grande na grade de miniaturas custaria vários MB por página à toa.
+//
+// Todas em 16:9 — a maioria das originais é vertical (foto de celular) e o corte veio
+// pronto do redimensionador do Google (`=w1600-h900-c`), já que não há ferramenta de
+// imagem nesta máquina. O corte é centralizado: ao trocar uma foto, conferir o resultado
+// (em cartaz e banner vertical ele decepa o título).
 //
 // ⚠️ A pasta NÃO pode se chamar `eventos`: o nginx usa `try_files $uri $uri/ /index.html`,
 // então um diretório `dist/public/eventos/` passa a responder antes da rota `/eventos`
@@ -373,7 +378,7 @@ function EventRegistros({ title }: { title: string }) {
               key={f.mini}
               type="button"
               onClick={() => setAmpliada(f.full)}
-              className="h-16 w-16 rounded-lg overflow-hidden border border-gray-200 hover:border-secondary transition-colors"
+              className="w-24 aspect-video rounded-lg overflow-hidden border border-gray-200 hover:border-secondary transition-colors"
             >
               <img src={f.mini} alt={`Foto de ${title}`} loading="lazy" className="h-full w-full object-cover" />
             </button>
