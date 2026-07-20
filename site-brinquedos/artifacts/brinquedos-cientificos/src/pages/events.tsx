@@ -50,9 +50,22 @@ const MOSTRA_DOWNLOADS: {
   videoNaoListado: "https://drive.google.com/file/d/1KvpWkyOfSJmPykjQsMxnIH0idOO09YwA/view", // vídeo da Camila (Google Drive)
 };
 
+// Caminhos das fotos de um evento, numeradas de 1 a n em public/fotos-eventos/<slug>/:
+// `1-mini.jpg` (miniatura, ~400px) e `1.jpg` (ampliada no lightbox, ~1600px). Servir a
+// versão grande na grade de miniaturas custaria vários MB por página à toa.
+//
+// ⚠️ A pasta NÃO pode se chamar `eventos`: o nginx usa `try_files $uri $uri/ /index.html`,
+// então um diretório `dist/public/eventos/` passa a responder antes da rota `/eventos`
+// do SPA e a página inteira vira 403. Vale para qualquer nome de rota (ver App.tsx).
+const fotosDe = (slug: string, n: number) =>
+  Array.from({ length: n }, (_, i) => ({
+    mini: `/fotos-eventos/${slug}/${i + 1}-mini.jpg`,
+    full: `/fotos-eventos/${slug}/${i + 1}.jpg`,
+  }));
+
 // Registros (fotos e vídeos) dos eventos passados, por título do evento.
-// - `fotos`: imagens servidas pelo próprio site — colocar em public/eventos/<slug>/ e
-//   apontar o caminho aqui. Aparecem como miniaturas que ampliam ao clicar.
+// - `fotos`: imagens servidas pelo próprio site (ver `fotosDe`), como miniaturas que
+//   ampliam ao clicar.
 // - `album`: link da pasta do evento no Drive → botão de registros.
 // - `label`: texto do botão (padrão "Confira as fotos e vídeos"); usar "Confira as fotos"
 //   nas pastas que só têm imagens.
@@ -61,18 +74,25 @@ const MOSTRA_DOWNLOADS: {
 // ⚠️ O link do álbum precisa estar na forma `drive.google.com/drive/folders/<id>`.
 // O endereço que aparece na barra do navegador vem com `/u/2/` (índice da conta Google
 // de quem está logado) e daria erro para quem visita o site.
-const EVENT_MEDIA: Record<string, { fotos?: string[]; album?: string; label?: string }> = {
+const EVENT_MEDIA: Record<
+  string,
+  { fotos?: { mini: string; full: string }[]; album?: string; label?: string }
+> = {
   "Brinquedos Científicos: Matemática e Cultura": {
+    fotos: fotosDe("matematica-cultura", 5),
     album: "https://drive.google.com/drive/folders/1TnUtGOw_TuG0PilwKR3R5z10uxjRkrD_",
     label: "Confira as fotos",
   },
   "Oficinas Maker": {
+    fotos: fotosDe("oficinas-maker", 5),
     album: "https://drive.google.com/drive/folders/1-70GgmD2Nq-aNjrxJyZIWZA9xVEuZYok",
   },
   "Brinquedos Científicos na ExpoFavela 2025": {
+    fotos: fotosDe("expofavela-2025", 5),
     album: "https://drive.google.com/drive/folders/1XrGSoaDMArg-2Tsuw04dPkFBfJIr64yj",
   },
   "Brinquedos Científicos na Feira do Livro": {
+    fotos: fotosDe("feira-do-livro", 5),
     album: "https://drive.google.com/drive/folders/1W7MX4ZrM3EJy4Q8teweEZS56i641n-Vw",
     label: "Confira as fotos",
   },
@@ -348,14 +368,14 @@ function EventRegistros({ title }: { title: string }) {
     <div className="mt-4 pt-4 border-t border-gray-100">
       {!!media.fotos?.length && (
         <div className="flex flex-wrap gap-2 mb-3">
-          {media.fotos.map((src) => (
+          {media.fotos.map((f) => (
             <button
-              key={src}
+              key={f.mini}
               type="button"
-              onClick={() => setAmpliada(src)}
+              onClick={() => setAmpliada(f.full)}
               className="h-16 w-16 rounded-lg overflow-hidden border border-gray-200 hover:border-secondary transition-colors"
             >
-              <img src={src} alt={`Foto de ${title}`} loading="lazy" className="h-full w-full object-cover" />
+              <img src={f.mini} alt={`Foto de ${title}`} loading="lazy" className="h-full w-full object-cover" />
             </button>
           ))}
         </div>
