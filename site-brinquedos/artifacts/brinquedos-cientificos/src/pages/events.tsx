@@ -53,14 +53,30 @@ const MOSTRA_DOWNLOADS: {
 // Registros (fotos e vídeos) dos eventos passados, por título do evento.
 // - `fotos`: imagens servidas pelo próprio site — colocar em public/eventos/<slug>/ e
 //   apontar o caminho aqui. Aparecem como miniaturas que ampliam ao clicar.
-// - `album`: link da pasta do evento no Drive → botão "Confira as fotos e vídeos".
+// - `album`: link da pasta do evento no Drive → botão de registros.
+// - `label`: texto do botão (padrão "Confira as fotos e vídeos"); usar "Confira as fotos"
+//   nas pastas que só têm imagens.
 // Evento sem entrada aqui (ou com os dois vazios) simplesmente não mostra registros.
-// Exemplo:
-//   "Brinquedos Científicos na ExpoFavela 2025": {
-//     fotos: ["/eventos/expofavela-2025/01.jpg", "/eventos/expofavela-2025/02.jpg"],
-//     album: "https://drive.google.com/drive/folders/<id-da-subpasta-do-evento>",
-//   },
-const EVENT_MEDIA: Record<string, { fotos?: string[]; album?: string }> = {};
+//
+// ⚠️ O link do álbum precisa estar na forma `drive.google.com/drive/folders/<id>`.
+// O endereço que aparece na barra do navegador vem com `/u/2/` (índice da conta Google
+// de quem está logado) e daria erro para quem visita o site.
+const EVENT_MEDIA: Record<string, { fotos?: string[]; album?: string; label?: string }> = {
+  "Brinquedos Científicos: Matemática e Cultura": {
+    album: "https://drive.google.com/drive/folders/1TnUtGOw_TuG0PilwKR3R5z10uxjRkrD_",
+    label: "Confira as fotos",
+  },
+  "Oficinas Maker": {
+    album: "https://drive.google.com/drive/folders/1-70GgmD2Nq-aNjrxJyZIWZA9xVEuZYok",
+  },
+  "Brinquedos Científicos na ExpoFavela 2025": {
+    album: "https://drive.google.com/drive/folders/1XrGSoaDMArg-2Tsuw04dPkFBfJIr64yj",
+  },
+  "Brinquedos Científicos na Feira do Livro": {
+    album: "https://drive.google.com/drive/folders/1W7MX4ZrM3EJy4Q8teweEZS56i641n-Vw",
+    label: "Confira as fotos",
+  },
+};
 
 // Datas importantes da Mostra (exibidas em texto) — cronograma oficial do Regulamento (Seção 7).
 const MOSTRA_DATAS: { label: string; data: string }[] = [
@@ -351,7 +367,7 @@ function EventRegistros({ title }: { title: string }) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-sm font-bold text-secondary hover:underline"
         >
-          <ImageIcon className="h-4 w-4" /> Confira as fotos e vídeos <ArrowRight className="h-4 w-4" />
+          <ImageIcon className="h-4 w-4" /> {media.label ?? "Confira as fotos e vídeos"} <ArrowRight className="h-4 w-4" />
         </a>
       )}
 
