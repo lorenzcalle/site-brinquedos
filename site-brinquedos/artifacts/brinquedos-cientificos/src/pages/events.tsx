@@ -101,6 +101,11 @@ const EVENT_MEDIA: Record<
     album: "https://drive.google.com/drive/folders/1W7MX4ZrM3EJy4Q8teweEZS56i641n-Vw",
     label: "Confira as fotos",
   },
+  "Da Nascente ao Mar em Brinquedos Científicos - SNCT 2025": {
+    fotos: fotosDe("snct-2025", 5),
+    album: "https://drive.google.com/drive/folders/14j9u1NlJuzC5qPkC7ePM7yeom9Uj166R",
+    label: "Confira as fotos",
+  },
 };
 
 // Datas importantes da Mostra (exibidas em texto) — cronograma oficial do Regulamento (Seção 7).
