@@ -9,6 +9,7 @@ import About from "@/pages/about";
 import Portfolio from "@/pages/portfolio";
 import ToyDetail from "@/pages/toy-detail";
 import Materials from "@/pages/materials";
+import AgenteBncc from "@/pages/agente-bncc";
 import Equipe from "@/pages/equipe";
 import Events from "@/pages/events";
 import Contact from "@/pages/contact";
@@ -36,6 +37,7 @@ function Router() {
       <Route path="/portfolio" component={Portfolio} />
       <Route path="/portfolio/:id" component={ToyDetail} />
       <Route path="/materiais" component={Materials} />
+      <Route path="/agente" component={AgenteBncc} />
       <Route path="/equipe" component={Equipe} />
       <Route path="/eventos" component={Events} />
       <Route path="/contato" component={Contact} />

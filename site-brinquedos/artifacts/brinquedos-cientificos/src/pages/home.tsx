@@ -1,7 +1,8 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout";
-import { ArrowRight, BookOpen, Lightbulb, Play, Microscope, TestTube, Target, PlayCircle } from "lucide-react";
+import { ArrowRight, BookOpen, Bot, Lightbulb, Play, Microscope, TestTube, Target, PlayCircle } from "lucide-react";
+import agenteImg from "@/assets/images/agente/fig2_card_robotica.png";
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
@@ -157,6 +158,54 @@ export default function Home() {
               </p>
               <Link href="/portfolio" className="inline-flex items-center font-bold hover:underline">
                 Ver portfólio <ArrowRight className="ml-2 h-4 w-4" />
+              </Link>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Agente BNCC Computação */}
+      <section className="py-20 bg-gradient-to-br from-indigo-600 via-violet-600 to-indigo-700 relative overflow-hidden">
+        <div className="absolute inset-0 bg-[url('/pattern.svg')] opacity-10" />
+        <div className="container mx-auto px-4 md:px-6 relative z-10">
+          <div className="flex flex-col lg:flex-row items-center gap-12">
+            <motion.div
+              initial={{ opacity: 0, x: -40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="lg:w-1/2 text-white"
+            >
+              <div className="inline-flex items-center gap-2 bg-white/15 px-4 py-2 rounded-full text-sm font-bold mb-6">
+                <Bot className="h-4 w-4" /> Novidade: IA para professores
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black mb-6 leading-tight text-white">
+                Agente BNCC Computação
+              </h2>
+              <p className="text-white/85 text-xl leading-relaxed mb-8">
+                Descreva o que você quer ensinar e receba uma atividade pronta, alinhada à BNCC Computação, com plano de aula, roteiro, folha do aluno e rubrica em PDF. Com Modo Robótica para a escola pública.
+              </p>
+              <Link
+                href="/agente"
+                className="inline-flex items-center gap-2 bg-white text-indigo-700 font-bold text-lg px-8 py-4 rounded-2xl shadow-xl hover:-translate-y-1 transition-all"
+              >
+                Conhecer o agente <ArrowRight className="h-5 w-5" />
+              </Link>
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, x: 40 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.6 }}
+              className="lg:w-1/2 w-full"
+            >
+              <Link href="/agente" className="block">
+                <img
+                  src={agenteImg}
+                  alt="Atividade gerada pelo Agente BNCC Computação"
+                  loading="lazy"
+                  className="rounded-2xl shadow-2xl ring-1 ring-white/20 w-full h-auto"
+                />
               </Link>
             </motion.div>
           </div>

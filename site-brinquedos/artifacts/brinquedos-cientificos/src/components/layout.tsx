@@ -8,6 +8,7 @@ const navLinks = [
   { name: "O Projeto", path: "/sobre" },
   { name: "Portfólio", path: "/portfolio" },
   { name: "Materiais", path: "/materiais" },
+  { name: "Agente BNCC", path: "/agente" },
   { name: "Equipe", path: "/equipe" },
   { name: "Eventos", path: "/eventos" },
   { name: "Contato", path: "/contato" },
