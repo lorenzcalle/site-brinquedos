@@ -5,6 +5,7 @@ import NotFound from "./not-found";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { type Toy } from "@/lib/types";
+import { cachifyImage } from "@/lib/utils";
 
 function SkeletonDetail() {
   return (
@@ -95,7 +96,7 @@ export default function ToyDetail() {
 
             <div className="lg:w-1/2">
               <div className="rounded-3xl overflow-hidden shadow-2xl mb-8">
-                <img src={toy.image} alt={toy.title} className="w-full max-h-[420px] object-contain" />
+                <img src={cachifyImage(toy.image)} alt={toy.title} className="w-full max-h-[420px] object-contain" />
               </div>
 
               {toy.guide_url && (

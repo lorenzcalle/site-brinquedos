@@ -5,6 +5,7 @@ import { ArrowRight, Search, X, FlaskConical } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { type Toy } from "@/lib/types";
+import { cachifyImage } from "@/lib/utils";
 
 function SkeletonCard() {
   return (
@@ -121,8 +122,9 @@ export default function Portfolio() {
                 >
                   <div className="h-64 overflow-hidden">
                     <img
-                      src={toy.image}
+                      src={cachifyImage(toy.image)}
                       alt={toy.title}
+                      loading="lazy"
                       className="w-full h-full object-contain hover:scale-105 transition-transform duration-500"
                     />
                   </div>
