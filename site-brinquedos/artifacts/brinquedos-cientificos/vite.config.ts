@@ -2,6 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
+import { spaRouteDirs } from "./vite-plugin-spa-route-dirs";
 
 const port = Number(process.env.PORT ?? "3000");
 const basePath = process.env.BASE_PATH ?? "/";
@@ -11,6 +12,7 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
+    spaRouteDirs({ routesFile: "src/App.tsx" }),
   ],
   resolve: {
     alias: {
