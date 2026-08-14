@@ -1,6 +1,6 @@
 import { Layout } from "@/components/layout";
 import { motion } from "framer-motion";
-import { Calendar, Clock, MapPin, CalendarX, Ticket, ArrowRight, Hourglass, FileText, Download, Image as ImageIcon, Youtube, CalendarDays, ClipboardList } from "lucide-react";
+import { Calendar, Clock, MapPin, CalendarX, Ticket, ArrowRight, Hourglass, FileText, Download, Image as ImageIcon, Youtube, CalendarDays, ClipboardList, AlertTriangle } from "lucide-react";
 import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
@@ -46,7 +46,9 @@ const MOSTRA_DOWNLOADS: {
   regulamento: "/downloads/regulamento-mostra-bc-2026.pdf",
   fichaDoc: "/downloads/ficha-catalografica-brinquedo-cientifico.docx",
   fichaPdf: "/downloads/ficha-catalografica-brinquedo-cientifico.pdf",
-  bannerModelo: null,
+  // 0,80 m x 1,20 m (conferido no próprio arquivo: sldSz 28800425x43200638 EMU = 80x120 cm).
+  // A mensagem da Cris dizia "0,80cmx1,20cm" — era erro de digitação, são metros.
+  bannerModelo: "/downloads/modelo-banner-mostra-bc-2026.pptx",
   videoNaoListado: "https://drive.google.com/file/d/1KvpWkyOfSJmPykjQsMxnIH0idOO09YwA/view", // vídeo da Camila (Google Drive)
 };
 
@@ -328,8 +330,17 @@ function MostraEscolas() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <h3 className="text-lg font-black text-foreground mb-1">Modelo de banner</h3>
-                  <p className="text-sm text-foreground/70 mb-4">Modelo para a confecção do banner de apresentação.</p>
-                  <DownloadButton href={MOSTRA_DOWNLOADS.bannerModelo} label="Baixar modelo" />
+                  <p className="text-sm text-foreground/70 mb-3">Modelo para a confecção do banner de apresentação.</p>
+                  {/* Observação da coordenação: o modelo já vem no tamanho de impressão. */}
+                  <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 p-3 mb-4">
+                    <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                    <p className="text-xs text-amber-900 leading-relaxed">
+                      <strong className="font-black">Atenção:</strong> o modelo é editável e já está nas
+                      dimensões corretas (<strong className="font-bold">0,80 m × 1,20 m</strong>).
+                      Somente preencher as informações e imprimir.
+                    </p>
+                  </div>
+                  <DownloadButton href={MOSTRA_DOWNLOADS.bannerModelo} label="Baixar modelo" sub="PPTX · 14 MB" />
                 </div>
               </div>
             </div>
