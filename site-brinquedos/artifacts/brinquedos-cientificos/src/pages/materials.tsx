@@ -72,9 +72,9 @@ export default function Materiais() {
           <span className="inline-block bg-white/20 text-white text-xs font-bold tracking-widest uppercase px-4 py-1 rounded-full mb-4">
             Biblioteca gratuita
           </span>
-          <h1 className="text-5xl font-black mb-4">Vídeos e Manuais</h1>
+          <h1 className="text-5xl font-black mb-4">Tutoriais em Vídeo e Texto</h1>
           <p className="text-lg text-white/85 max-w-xl mx-auto">
-            Todo grande projeto começa pelo conhecimento. Assista aos vídeos, baixe os manuais e aprenda sobre componentes eletrônicos, impressão 3D, desenvolvimento de produtos, programação e outras tecnologias que podem transformar ideias em soluções criativas.
+            Todo grande projeto começa pelo conhecimento. Explore os vídeos e manuais disponíveis e aprenda sobre componentes eletrônicos, impressão 3D, desenvolvimento de produtos, programação e outras tecnologias que podem transformar ideias em soluções criativas.
           </p>
           <div className="flex justify-center gap-12 mt-8">
             {[[loading ? "–" : String(materials.length), "Vídeos"], [loadingManuals ? "–" : String(manuals.length), "Manuais"], ["100%", "Gratuitos"]].map(([num, label]) => (

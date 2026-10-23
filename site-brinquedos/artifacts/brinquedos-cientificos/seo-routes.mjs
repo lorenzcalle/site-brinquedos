@@ -48,7 +48,7 @@ export const ROUTE_META = {
     priority: 0.9,
   },
   "/materiais": {
-    title: "Vídeos e Manuais — Brinquedos Científicos",
+    title: "Tutoriais em Vídeo e Texto — Brinquedos Científicos",
     description:
       "Tutoriais em vídeo para montar brinquedos científicos passo a passo e manuais em PDF para baixar, imprimir e usar em sala de aula.",
     priority: 0.8,
