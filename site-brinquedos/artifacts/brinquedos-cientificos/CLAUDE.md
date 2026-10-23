@@ -45,12 +45,18 @@ VITE_SUPABASE_ANON_KEY=<chave publishable>
   (são públicos por natureza). Template/Service/Public key configurados no painel EmailJS.
 - **Admin** (`/admin`) usa **Supabase Auth** (`signInWithPassword`). A sessão persiste.
   Operações privilegiadas só funcionam logado (papel `authenticated` no RLS).
+  Painel em seções (`/admin#brinquedos` etc.): `src/pages/admin.tsx` só tem login, menu e
+  contagens; cada seção é um componente em `src/components/admin/` (Início, Brinquedos,
+  Submissões, Vídeos, Eventos) que carrega os próprios dados. Peças comuns (Modal, Field,
+  `useConfirm` no lugar do `confirm()`) em `components/admin/ui.tsx`. Imagens são
+  redimensionadas no navegador antes do upload (`src/lib/image.ts`).
 
 ## Banco de dados (Supabase)
 
 Tabelas (todas com RLS fechado — público só lê o que deve, admin gerencia):
 - **`toys`** — portfólio. Público lê só `status='approved'`. Campos: id, title,
-  description, image, concepts[], materials[], concepts_description, guide_url, status.
+  description, image, concepts[], materials[], concepts_description, guide_url, status,
+  featured (os 2 da seção “Nossa missão” da home — `supabase/toys-destaque.sql`).
 - **`submissions`** — envios do formulário. Público só INSERE (não lê — contém e-mails).
   `concepts`/`materials` podem ser string (envios antigos) OU array (envios novos) —
   usar `toArray()` no admin.

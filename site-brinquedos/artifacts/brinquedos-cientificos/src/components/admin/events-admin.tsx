@@ -2,9 +2,10 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import {
-  type EventPhoto, type EventRow, TBD_DATE,
+  type EventPhoto, type EventRow, TBD_DATE, today,
   normalizeDriveFolder, uploadEventPhoto, uploadEventCover, removeEventFiles,
 } from "@/lib/events";
+import { Field, SectionHeader, inputCls, useConfirm } from "./ui";
 import { Trash2, Loader2, Pencil, Plus, X, ImagePlus, ArrowLeft, ArrowRight, CalendarCheck, AlertTriangle, ExternalLink } from "lucide-react";
 
 type Form = {
@@ -28,30 +29,16 @@ const emptyForm: Form = {
   registration_url: "", registration_deadline: "", album_url: "", album_label: "", image_url: null, photos: [],
 };
 
-const inputCls = "w-full px-4 py-2.5 rounded-xl border-2 border-gray-200 focus:border-orange-500 outline-none transition-colors";
-
 function formatDate(d?: string | null) {
   if (!d || d === TBD_DATE) return "Data a definir";
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }).format(new Date(d));
 }
 
-const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" }); // YYYY-MM-DD
-
-function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <div>
-      <label className="block text-sm font-bold text-gray-700 mb-1">
-        {label} {hint && <span className="font-normal text-gray-400">({hint})</span>}
-      </label>
-      {children}
-    </div>
-  );
-}
-
 // Aba "Eventos" do /admin: cria, edita e apaga eventos, com capa, fotos e álbum.
 // Tudo vai direto para o Supabase — o site mostra a mudança na hora.
-export function EventsAdmin({ onCount }: { onCount: (n: number) => void }) {
+export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () => void; startNew?: boolean; onStarted?: () => void }) {
   const { toast } = useToast();
+  const [confirm, confirmDialog] = useConfirm();
   const [events, setEvents] = useState<EventRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -73,11 +60,13 @@ export function EventsAdmin({ onCount }: { onCount: (n: number) => void }) {
     if (error) toast({ title: "Erro ao carregar eventos", description: error.message, variant: "destructive" });
     const rows = (data as EventRow[]) ?? [];
     setEvents(rows);
-    onCount(rows.length);
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
+  useEffect(() => {
+    if (startNew) { openNew(); onStarted?.(); }
+  }, [startNew]);
 
   const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm(f => ({ ...f, [k]: v }));
 
@@ -197,6 +186,7 @@ export function EventsAdmin({ onCount }: { onCount: (n: number) => void }) {
     setEditingId(null);
     toast({ title: isNew ? "Evento criado" : "Evento atualizado", description: payload.title });
     load();
+    onChange();
   };
 
   const markPast = async (ev: EventRow) => {
@@ -206,10 +196,11 @@ export function EventsAdmin({ onCount }: { onCount: (n: number) => void }) {
     if (error) return void toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
     toast({ title: "Movido para eventos passados", description: ev.title });
     load();
+    onChange();
   };
 
   const remove = async (ev: EventRow) => {
-    if (!confirm(`Excluir o evento "${ev.title}" e as fotos enviadas por aqui? Isso não pode ser desfeito.`)) return;
+    if (!(await confirm(`Excluir o evento "${ev.title}"?`, "Ele sai da página Eventos e as fotos enviadas por aqui são apagadas. Isso não pode ser desfeito."))) return;
     setBusyId(ev.id);
     const { error } = await supabase.from("events").delete().eq("id", ev.id);
     if (!error) await removeEventFiles([ev.image_url, ...(ev.photos ?? []).flatMap(p => [p.mini, p.full])]);
@@ -217,6 +208,7 @@ export function EventsAdmin({ onCount }: { onCount: (n: number) => void }) {
     if (error) return void toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
     toast({ title: "Evento excluído", description: ev.title });
     load();
+    onChange();
   };
 
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-orange-500" /></div>;
@@ -264,9 +256,15 @@ export function EventsAdmin({ onCount }: { onCount: (n: number) => void }) {
 
   return (
     <>
-      <button onClick={openNew} className="w-full mb-6 inline-flex items-center justify-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold py-3 rounded-xl transition-colors">
-        <Plus className="h-5 w-5" /> Novo evento
-      </button>
+      <SectionHeader
+        title="Eventos"
+        subtitle="Página Eventos e Oficinas. Mudanças aparecem no site na hora."
+        action={
+          <button onClick={openNew} className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl transition-colors">
+            <Plus className="h-5 w-5" /> Novo evento
+          </button>
+        }
+      />
 
       <h3 className="text-sm font-black uppercase tracking-wide text-gray-400 mb-3">Próximos ({upcoming.length})</h3>
       {upcoming.length === 0 ? <p className="text-gray-400 text-sm mb-8">Nenhum evento futuro — a página mostra “Nenhum evento agendado”.</p> : upcoming.map(card)}
@@ -399,6 +397,7 @@ export function EventsAdmin({ onCount }: { onCount: (n: number) => void }) {
           </div>
         </div>
       )}
+      {confirmDialog}
     </>
   );
 }

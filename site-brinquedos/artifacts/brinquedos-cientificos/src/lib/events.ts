@@ -1,4 +1,5 @@
 import { supabase } from "@/lib/supabase";
+import { cropToJpeg } from "@/lib/image";
 
 export type EventPhoto = { mini: string; full: string };
 
@@ -25,6 +26,9 @@ export type EventRow = {
 // que a UI exibe como "A definir" (manter em sincronia com seed-evento.mjs).
 export const TBD_DATE = "2099-12-31";
 
+// Hoje no fuso do Brasil, em YYYY-MM-DD (comparável direto com a coluna `date`).
+export const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
+
 export const EVENT_BUCKET = "event-media";
 
 // O link que aparece na barra do navegador vem com `/u/2/` (índice da conta Google de
@@ -32,23 +36,6 @@ export const EVENT_BUCKET = "event-media";
 export function normalizeDriveFolder(url: string): string {
   const m = url.match(/drive\.google\.com\/.*folders\/([\w-]+)/);
   return m ? `https://drive.google.com/drive/folders/${m[1]}` : url.trim();
-}
-
-// Recorta a imagem no centro para a proporção w:h e reduz para w×h, em JPEG.
-// Feito no navegador porque não há ferramenta de imagem no servidor; as fotos de
-// celular (verticais) perdem topo e base — o admin vê a miniatura antes de salvar.
-async function cropToJpeg(file: File, w: number, h: number): Promise<Blob> {
-  const bmp = await createImageBitmap(file);
-  const scale = Math.max(w / bmp.width, h / bmp.height);
-  const sw = w / scale, sh = h / scale;
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  canvas.getContext("2d")!.drawImage(bmp, (bmp.width - sw) / 2, (bmp.height - sh) / 2, sw, sh, 0, 0, w, h);
-  bmp.close();
-  return new Promise((resolve, reject) =>
-    canvas.toBlob(b => (b ? resolve(b) : reject(new Error("Falha ao converter a imagem"))), "image/jpeg", 0.85),
-  );
 }
 
 async function upload(path: string, blob: Blob): Promise<string> {

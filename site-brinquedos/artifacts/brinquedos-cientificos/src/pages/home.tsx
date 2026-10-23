@@ -49,25 +49,19 @@ export default function Home() {
   const [vIndex, setVIndex] = useState(0);
   const [paused, setPaused] = useState(false);
 
-  const MISSION_TOY_IDS = [
-    "803ca654-3c2f-4982-9ba5-e4681975d86a", // EcoConcha
-    "283adb6c-d7bf-46ac-91d5-446604fb8f6a", // H2SOL
-  ];
-
   useEffect(() => {
     supabase
       .from("toys")
-      .select("id, title, description, image, concepts")
+      .select("id, title, description, image, concepts, featured")
       .eq("status", "approved")
+      .order("featured", { ascending: false }) // destaques entram mesmo se passar do limite
       .limit(20)
       .then(({ data, error }) => {
         if (error) setError(true);
         else {
           const all = data ?? [];
-          const fixed = MISSION_TOY_IDS
-            .map(id => all.find(t => t.id === id))
-            .filter(Boolean) as Toy[];
-          setMissionToys(fixed);
+          // Os 2 da seção "Nossa missão" são os marcados com estrela no /admin (Brinquedos).
+          setMissionToys(all.filter(t => t.featured).slice(0, 2) as Toy[]);
           const shuffled = [...all].sort(() => Math.random() - 0.5);
           setHomeToys(shuffled.slice(0, 4));
         }
