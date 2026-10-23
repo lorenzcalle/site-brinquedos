@@ -1,7 +1,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Layout } from "@/components/layout";
-import { ArrowRight, BookOpen, Bot, Lightbulb, Play, Microscope, TestTube, Target, PlayCircle } from "lucide-react";
+import { ArrowRight, BookOpen, Bot, Lightbulb, Play, Microscope, TestTube, Target, PlayCircle, School, Send, ClipboardCheck, Sparkles } from "lucide-react";
 import agenteImg from "@/assets/images/agente/fig2_card_robotica.png";
 
 import { useState, useEffect } from "react";
@@ -352,6 +352,63 @@ export default function Home() {
               Ver Todos os Brinquedos <ArrowRight className="h-5 w-5" />
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Envie seu brinquedo (formulário /submit → /admin → Envios da comunidade) */}
+      <section className="pb-24 bg-white">
+        <div className="container mx-auto px-4 md:px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-amber-50 via-orange-50 to-amber-100 border border-orange-100 p-8 md:p-12 lg:p-14"
+          >
+            <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-orange-200/40" />
+            <div className="absolute -bottom-20 -left-10 w-48 h-48 rounded-full bg-amber-200/40" />
+            <div className="relative grid lg:grid-cols-2 gap-10 lg:gap-14 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 bg-white text-orange-600 px-4 py-2 rounded-full text-sm font-bold mb-6 shadow-sm">
+                  <School className="h-4 w-4" /> Para escolas e professores
+                </div>
+                <h2 className="text-3xl md:text-5xl font-black text-foreground mb-5 leading-tight">
+                  {t("inicio.envio_titulo")}
+                </h2>
+                <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8">
+                  {t("inicio.envio_texto")}
+                </p>
+                <Link
+                  href="/submit"
+                  className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold text-lg px-8 py-4 rounded-2xl shadow-lg shadow-orange-500/25 hover:-translate-y-1 transition-all"
+                >
+                  <Send className="h-5 w-5" /> Enviar um brinquedo
+                </Link>
+                <p className="mt-4 text-sm text-muted-foreground">Gratuito. Leva uns 10 minutos.</p>
+              </div>
+
+              <ol className="space-y-4">
+                {[
+                  { icon: Send, title: "Envie pelo site", text: "Uma foto, os materiais usados, os conceitos que o brinquedo ensina e o guia de montagem em PDF." },
+                  { icon: ClipboardCheck, title: "A equipe avalia", text: "O time do projeto confere cada envio antes de publicar." },
+                  { icon: Sparkles, title: "Aprovado, vai para a galeria", text: "O brinquedo entra no Portfólio, com foto e guia, para outras escolas reproduzirem." },
+                ].map(({ icon: Icon, title, text }, i) => (
+                  <li key={title} className="flex gap-4 bg-white/80 backdrop-blur rounded-2xl p-5 shadow-sm border border-white">
+                    <div className="relative shrink-0">
+                      <div className="w-12 h-12 rounded-xl bg-orange-500 text-white flex items-center justify-center">
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <span className="absolute -top-2 -left-2 w-6 h-6 rounded-full bg-foreground text-white text-xs font-black flex items-center justify-center ring-2 ring-white">{i + 1}</span>
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-lg text-foreground">{title}</h3>
+                      <p className="text-muted-foreground">{text}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            </div>
+          </motion.div>
         </div>
       </section>
 

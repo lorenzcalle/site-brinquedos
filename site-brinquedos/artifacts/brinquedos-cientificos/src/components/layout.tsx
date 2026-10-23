@@ -156,6 +156,7 @@ export function Footer() {
               <li><Link href="/equipe" className="hover:text-white transition-colors">Equipe</Link></li>
               <li><Link href="/eventos" className="hover:text-white transition-colors">Eventos</Link></li>
               <li><Link href="/contato" className="hover:text-white transition-colors">Contato</Link></li>
+              <li><Link href="/submit" className="hover:text-white transition-colors">Envie seu brinquedo</Link></li>
             </ul>
           </div>
 
@@ -203,7 +204,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen flex flex-col font-sans">
       <Navbar />
-      <main className="flex-1 pt-[88px]">
+      <main className="flex-1 pt-[88px] overflow-x-clip">
         {children}
       </main>
       <Footer />

@@ -41,6 +41,8 @@ export const SITE_TEXT_PAGES: SiteTextPage[] = [
         ].join("\n"),
       },
       { key: "inicio.galeria_sub", label: "Galeria de Projetos — subtítulo", default: "Conheça alguns dos nossos brinquedos científicos mais populares." },
+      { key: "inicio.envio_titulo", label: "Envie seu brinquedo — título", default: "Sua escola também cria brinquedos científicos?" },
+      { key: "inicio.envio_texto", label: "Envie seu brinquedo — texto", kind: "text", default: "Professores e estudantes podem enviar seus próprios brinquedos para a nossa galeria. A equipe do projeto avalia cada envio e, se aprovado, ele passa a inspirar outras escolas." },
       { key: "inicio.videos_texto", label: "Aprenda com nossos vídeos — texto", kind: "text", default: "Explore os materiais disponíveis em nossa Biblioteca e aprenda mais sobre design, desenvolvimento de produtos, componentes eletrônicos e muito mais." },
       { key: "inicio.cta_titulo", label: "Chamada final — título", default: "Pronto para colocar a mão na massa?" },
       { key: "inicio.cta_texto", label: "Chamada final — texto", kind: "text", default: "Explore nossa Mostra de Brinquedos Científicos e comece seu primeiro projeto hoje mesmo." },
