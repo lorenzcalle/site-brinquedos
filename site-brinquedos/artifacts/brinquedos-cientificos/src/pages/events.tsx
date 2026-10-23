@@ -149,6 +149,10 @@ function FeaturedEventBanner({ ev }: { ev: Event }) {
   const deadlineFmt = deadlineStr
     ? new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "UTC" }).format(new Date(deadlineStr))
     : null;
+  // Prazo vencido: o selo "Inscrições abertas" e o botão mentiriam (foi o que aconteceu
+  // com a Mostra de 2026, que ficou com inscrição aberta semanas depois do prazo).
+  // Evento sem prazo cadastrado segue como aberto.
+  const inscricoesAbertas = daysToDeadline === null || daysToDeadline >= 0;
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -162,13 +166,19 @@ function FeaturedEventBanner({ ev }: { ev: Event }) {
 
       <div className="relative z-10 p-8 md:p-10">
         <div className="flex flex-wrap items-center gap-3 mb-6">
-          <span className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm font-bold">
-            <span className="relative flex h-2.5 w-2.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-300 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400" />
+          {inscricoesAbertas ? (
+            <span className="inline-flex items-center gap-2 bg-white/15 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm font-bold">
+              <span className="relative flex h-2.5 w-2.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-300 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-400" />
+              </span>
+              Inscrições abertas
             </span>
-            Inscrições abertas
-          </span>
+          ) : (
+            <span className="inline-flex items-center gap-2 bg-black/15 backdrop-blur-sm rounded-full px-4 py-1.5 text-sm font-bold text-white/85">
+              <Hourglass className="h-4 w-4" /> Inscrições encerradas
+            </span>
+          )}
           <span className="inline-flex items-center gap-2 bg-green-600 text-white rounded-full px-4 py-1.5 text-sm font-bold">
             <Ticket className="h-4 w-4" /> Entrada gratuita
           </span>
@@ -200,7 +210,7 @@ function FeaturedEventBanner({ ev }: { ev: Event }) {
                 <div className="text-sm font-bold text-secondary/60 mt-1">{dp.year}</div>
               </div>
             )}
-            {registrationUrl && (
+            {registrationUrl && inscricoesAbertas && (
               <a
                 href={registrationUrl}
                 target="_blank"
