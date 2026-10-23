@@ -5,34 +5,11 @@ import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { type EventRow as Event, TBD_DATE } from "@/lib/events";
 
-type Event = {
-  id: string;
-  title: string;
-  date?: string | null;
-  time?: string;
-  location?: string;
-  description?: string;
-  image_url?: string;
-  type: "upcoming" | "past";
-};
-
-// A coluna `date` é NOT NULL; eventos com data a confirmar usam esta data-placeholder,
-// que a UI exibe como "A definir" (manter em sincronia com seed-evento.mjs).
-const TBD_DATE = "2099-12-31";
-
-// Eventos com formulário de inscrição externo (link específico por título do evento).
-// Havendo link aqui, o botão "Inscrever-se" abre o formulário; senão, vai para /contato.
-const REGISTRATION_LINKS: Record<string, string> = {
-  "Mostra Missioneira de Brinquedos Científicos":
-    "https://san.uri.br/eventos/mostra_missioneira_brinquedos_cientificos2026/inscricao.php",
-};
-
-// Prazo final de inscrição por evento (YYYY-MM-DD). A contagem regressiva do banner
-// usa esta data (o que é acionável ao lado do "Inscrever-se"), não a data do evento.
-const REGISTRATION_DEADLINES: Record<string, string> = {
-  "Mostra Missioneira de Brinquedos Científicos": "2026-09-18",
-};
+// Título exato da Mostra no banco: a seção "Para as escolas participantes" (regulamento,
+// ficha, banner) é específica dela e aparece enquanto ela estiver nos próximos eventos.
+const MOSTRA_TITLE = "Mostra Missioneira de Brinquedos Científicos";
 
 // Materiais para as escolas participantes da Mostra. `null` = ainda não disponível
 // ("Em breve"). Ao receber o arquivo, colocar em public/downloads/ e apontar o caminho aqui.
@@ -52,69 +29,11 @@ const MOSTRA_DOWNLOADS: {
   videoNaoListado: "https://drive.google.com/file/d/1KvpWkyOfSJmPykjQsMxnIH0idOO09YwA/view", // vídeo da Camila (Google Drive)
 };
 
-// Caminhos das fotos de um evento, numeradas de 1 a n em public/fotos-eventos/<slug>/:
-// `1-mini.jpg` (miniatura, 400x225) e `1.jpg` (ampliada no lightbox, 1600x900). Servir a
-// versão grande na grade de miniaturas custaria vários MB por página à toa.
-//
-// Todas em 16:9 — a maioria das originais é vertical (foto de celular) e o corte veio
-// pronto do redimensionador do Google (`=w1600-h900-c`), já que não há ferramenta de
-// imagem nesta máquina. O corte é centralizado: ao trocar uma foto, conferir o resultado
-// (em cartaz e banner vertical ele decepa o título).
-//
-// ⚠️ A pasta NÃO pode se chamar `eventos`: o nginx usa `try_files $uri $uri/ /index.html`,
-// então um diretório `dist/public/eventos/` passa a responder antes da rota `/eventos`
-// do SPA e a página inteira vira 403. Vale para qualquer nome de rota (ver App.tsx).
-const fotosDe = (slug: string, n: number) =>
-  Array.from({ length: n }, (_, i) => ({
-    mini: `/fotos-eventos/${slug}/${i + 1}-mini.jpg`,
-    full: `/fotos-eventos/${slug}/${i + 1}.jpg`,
-  }));
-
-// Registros (fotos e vídeos) dos eventos passados, por título do evento.
-// - `fotos`: imagens servidas pelo próprio site (ver `fotosDe`), como miniaturas que
-//   ampliam ao clicar.
-// - `album`: link da pasta do evento no Drive → botão de registros.
-// - `label`: texto do botão (padrão "Confira as fotos e vídeos"); usar "Confira as fotos"
-//   nas pastas que só têm imagens.
-// Evento sem entrada aqui (ou com os dois vazios) simplesmente não mostra registros.
-//
-// ⚠️ O link do álbum precisa estar na forma `drive.google.com/drive/folders/<id>`.
-// O endereço que aparece na barra do navegador vem com `/u/2/` (índice da conta Google
-// de quem está logado) e daria erro para quem visita o site.
-const EVENT_MEDIA: Record<
-  string,
-  { fotos?: { mini: string; full: string }[]; album?: string; label?: string }
-> = {
-  "Brinquedos Científicos: Matemática e Cultura": {
-    fotos: fotosDe("matematica-cultura", 5),
-    album: "https://drive.google.com/drive/folders/1TnUtGOw_TuG0PilwKR3R5z10uxjRkrD_",
-    label: "Confira as fotos",
-  },
-  "Oficinas Maker": {
-    fotos: fotosDe("oficinas-maker", 5),
-    album: "https://drive.google.com/drive/folders/1-70GgmD2Nq-aNjrxJyZIWZA9xVEuZYok",
-  },
-  "Brinquedos Científicos na ExpoFavela 2025": {
-    fotos: fotosDe("expofavela-2025", 5),
-    album: "https://drive.google.com/drive/folders/1XrGSoaDMArg-2Tsuw04dPkFBfJIr64yj",
-  },
-  "Brinquedos Científicos na Feira do Livro": {
-    fotos: fotosDe("feira-do-livro", 5),
-    album: "https://drive.google.com/drive/folders/1W7MX4ZrM3EJy4Q8teweEZS56i641n-Vw",
-    label: "Confira as fotos",
-  },
-  "Da Nascente ao Mar em Brinquedos Científicos - SNCT 2025": {
-    fotos: fotosDe("snct-2025", 5),
-    album: "https://drive.google.com/drive/folders/14j9u1NlJuzC5qPkC7ePM7yeom9Uj166R",
-    label: "Confira as fotos",
-  },
-};
-
 // Datas importantes da Mostra (exibidas em texto) — cronograma oficial do Regulamento (Seção 7).
 const MOSTRA_DATAS: { label: string; data: string }[] = [
   { label: "Lançamento do Regulamento", data: "02/06/2026" },
   { label: "Inscrição das equipes", data: "15/06/2026 a 18/09/2026" },
-  { label: "Realização da Mostra, divulgação dos resultados e cerimônia de premiação", data: "08/10/2026" },
+  { label: "Realização da Mostra, divulgação dos resultados e cerimônia de premiação", data: "16/10/2026" },
 ];
 
 function formatDate(dateStr?: string | null) {
@@ -136,14 +55,14 @@ function dateParts(dateStr?: string | null) {
   return { day: fmt({ day: "2-digit" }), month: fmt({ month: "short" }).replace(".", ""), year: fmt({ year: "numeric" }) };
 }
 
-// Banner de destaque para o evento principal (com inscrição aberta).
+// Banner de destaque para evento com formulário de inscrição (registration_url).
 function FeaturedEventBanner({ ev }: { ev: Event }) {
   const dp = dateParts(ev.date);
-  const registrationUrl = REGISTRATION_LINKS[ev.title];
+  const registrationUrl = ev.registration_url;
   const eventMs = ev.date && ev.date !== TBD_DATE ? new Date(ev.date).getTime() : null;
   const daysLeft = eventMs ? Math.ceil((eventMs - Date.now()) / 86_400_000) : null;
   // Prazo de inscrição: conta até o fim do dia (23:59 no fuso do Brasil, UTC−3).
-  const deadlineStr = REGISTRATION_DEADLINES[ev.title];
+  const deadlineStr = ev.registration_deadline;
   const deadlineMs = deadlineStr ? new Date(`${deadlineStr}T23:59:59-03:00`).getTime() : null;
   const daysToDeadline = deadlineMs ? Math.ceil((deadlineMs - Date.now()) / 86_400_000) : null;
   const deadlineFmt = deadlineStr
@@ -390,14 +309,17 @@ function MostraEscolas() {
 }
 
 // Registros de um evento passado: miniaturas (ampliam ao clicar) + link do álbum completo.
-function EventRegistros({ title }: { title: string }) {
+// Fotos e álbum vêm do próprio evento (editáveis no /admin); evento sem nenhum dos dois
+// não mostra a área.
+function EventRegistros({ ev }: { ev: Event }) {
   const [ampliada, setAmpliada] = useState<string | null>(null);
-  const media = EVENT_MEDIA[title];
-  if (!media || (!media.fotos?.length && !media.album)) return null;
+  const title = ev.title;
+  const media = { fotos: ev.photos ?? [], album: ev.album_url, label: ev.album_label };
+  if (!media.fotos.length && !media.album) return null;
 
   return (
     <div className="mt-4 pt-4 border-t border-gray-100">
-      {!!media.fotos?.length && (
+      {!!media.fotos.length && (
         <div className="flex flex-wrap gap-2 mb-3">
           {media.fotos.map((f) => (
             <button
@@ -418,7 +340,7 @@ function EventRegistros({ title }: { title: string }) {
           rel="noopener noreferrer"
           className="inline-flex items-center gap-2 text-sm font-bold text-secondary hover:underline"
         >
-          <ImageIcon className="h-4 w-4" /> {media.label ?? "Confira as fotos e vídeos"} <ArrowRight className="h-4 w-4" />
+          <ImageIcon className="h-4 w-4" /> {media.label || "Confira as fotos e vídeos"} <ArrowRight className="h-4 w-4" />
         </a>
       )}
 
@@ -442,7 +364,7 @@ export default function Events() {
   useEffect(() => {
     supabase
       .from("events")
-      .select("id, title, date, time, location, description, image_url, type")
+      .select("*")
       .order("date", { ascending: false })
       .then(({ data }) => {
         const all = (data ?? []) as Event[];
@@ -485,7 +407,7 @@ export default function Events() {
           ) : (
             <div className="space-y-6">
               {upcoming.map((ev, i) => (
-                REGISTRATION_LINKS[ev.title] ? (
+                ev.registration_url ? (
                   <FeaturedEventBanner key={ev.id} ev={ev} />
                 ) : (
                 <motion.div
@@ -513,9 +435,9 @@ export default function Events() {
                         <p className="mt-4 text-orange-900/90 leading-relaxed max-w-2xl">{ev.description}</p>
                       )}
                     </div>
-                    {REGISTRATION_LINKS[ev.title] ? (
+                    {ev.registration_url ? (
                       <a
-                        href={REGISTRATION_LINKS[ev.title]}
+                        href={ev.registration_url}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="w-full md:w-auto bg-secondary hover:bg-secondary/90 text-white font-bold py-3 px-8 rounded-xl transition-colors shrink-0 text-center"
@@ -537,7 +459,7 @@ export default function Events() {
       </section>
 
       {/* Materiais para as escolas participantes da Mostra */}
-      {!loading && upcoming.some(e => REGISTRATION_LINKS[e.title]) && <MostraEscolas />}
+      {!loading && upcoming.some(e => e.title === MOSTRA_TITLE) && <MostraEscolas />}
 
       {/* Eventos Passados */}
       <section className="py-20 bg-gray-50">
@@ -581,7 +503,7 @@ export default function Events() {
                       </div>
                     )}
                     {ev.description && <p className="text-muted-foreground">{ev.description}</p>}
-                    <EventRegistros title={ev.title} />
+                    <EventRegistros ev={ev} />
                   </div>
                 </motion.div>
               ))}

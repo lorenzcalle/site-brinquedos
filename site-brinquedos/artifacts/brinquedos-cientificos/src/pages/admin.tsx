@@ -6,6 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { type Toy } from "@/lib/types";
 import { videoThumb, isVideoUrl } from "@/lib/utils";
 import { VIDEO_CATEGORIES, VIDEO_LEVELS } from "@/lib/data";
+import { EventsAdmin } from "@/components/admin/events-admin";
 import { Trash2, Loader2, LogOut, FileText, Check, X, Pencil, RotateCcw, Plus, Video } from "lucide-react";
 
 type Submission = {
@@ -31,7 +32,7 @@ type Material = {
   video_url: string;
 };
 
-type Tab = "pending" | "approved" | "rejected" | "materials";
+type Tab = "pending" | "approved" | "rejected" | "materials" | "events";
 
 const emptyMaterialForm = { title: "", description: "", category: VIDEO_CATEGORIES[0], level: VIDEO_LEVELS[0], video_url: "" };
 
@@ -74,6 +75,7 @@ export default function Admin() {
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<Tab>("pending");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [eventCount, setEventCount] = useState<number | null>(null);
 
   // Edição de brinquedo publicado
   const [editing, setEditing] = useState<Toy | null>(null);
@@ -108,16 +110,18 @@ export default function Admin() {
 
   // ─── Carregamento ────────────────────────────────────────────────────────────
   const loadAll = async () => {
-    const [p, a, r, m] = await Promise.all([
+    const [p, a, r, m, ev] = await Promise.all([
       supabase.from("submissions").select("*").eq("status", "pending").order("created_at", { ascending: false }),
       supabase.from("toys").select("*").eq("status", "approved"),
       supabase.from("submissions").select("*").eq("status", "rejected").order("created_at", { ascending: false }),
       supabase.from("materials").select("*").order("created_at", { ascending: false }),
+      supabase.from("events").select("id", { count: "exact", head: true }),
     ]);
     setItems((p.data as Submission[]) ?? []);
     setToys((a.data as Toy[]) ?? []);
     setRejected((r.data as Submission[]) ?? []);
     setMaterials((m.data as Material[]) ?? []);
+    setEventCount(ev.count ?? 0);
     setLoading(false);
   };
 
@@ -344,6 +348,7 @@ export default function Admin() {
     { key: "approved", label: "Publicados", count: toys.length },
     { key: "rejected", label: "Rejeitados", count: rejected.length },
     { key: "materials", label: "Materiais", count: materials.length },
+    { key: "events", label: "Eventos", count: eventCount ?? 0 },
   ];
 
   return (
@@ -513,6 +518,9 @@ export default function Admin() {
                 })}
               </>
             )}
+
+            {/* Eventos — componente próprio (carrega a tabela events sozinho) */}
+            {tab === "events" && <EventsAdmin onCount={setEventCount} />}
           </>
         )}
       </div>

@@ -38,8 +38,9 @@ O que entrou:
 
 ## Como atualizar o evento (operacional)
 
-Eventos **não** são editáveis pelo `/admin` — só por script `.mjs` na worktree
-`funny-matsumoto` (usa a chave `service_role` do `.env.seed`):
+Desde a Fase 1 do painel, eventos se editam no `/admin` → aba **Eventos** (dados, inscrição,
+prazo, capa, fotos e álbum). O caminho antigo, por script `.mjs` na worktree
+`funny-matsumoto` (chave `service_role` do `.env.seed`), segue valendo para correções em lote:
 
 ```bash
 cd /var/www/bc.san.uri.br/.claude/worktrees/funny-matsumoto-97f4c9

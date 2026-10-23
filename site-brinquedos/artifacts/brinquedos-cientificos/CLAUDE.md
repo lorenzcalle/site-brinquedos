@@ -54,12 +54,16 @@ Tabelas (todas com RLS fechado — público só lê o que deve, admin gerencia):
 - **`submissions`** — envios do formulário. Público só INSERE (não lê — contém e-mails).
   `concepts`/`materials` podem ser string (envios antigos) OU array (envios novos) —
   usar `toArray()` no admin.
-- **`events`** — eventos. Público lê. type = 'upcoming' | 'past'.
+- **`events`** — eventos. Público lê. type = 'upcoming' | 'past'. Editados na aba Eventos
+  do `/admin`. Inscrição (`registration_url`, `registration_deadline`), álbum do Drive
+  (`album_url`, `album_label`) e fotos (`photos` jsonb `[{mini, full}]`) são colunas —
+  ver `supabase/eventos-admin.sql`. Fotos novas vão para o bucket `event-media`.
 - **`materials`** — vídeos tutoriais (YouTube). Público lê. Campos: id, title,
   description, category, level, video_url.
 
 SQL das políticas/tabelas versionado em `site-brinquedos/supabase/`.
-Buckets de storage: `toy-images`, `toy-guides` (leitura pública; insert público p/ o form).
+Buckets de storage: `toy-images`, `toy-guides` (leitura pública; insert público p/ o form);
+`event-media` (leitura pública; escrita só logado — fotos e capas de eventos).
 
 ## Deploy
 

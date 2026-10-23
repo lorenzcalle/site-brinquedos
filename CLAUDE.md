@@ -16,4 +16,6 @@ que o nginx serve) → `git push`. Dados no Supabase mudam na hora, **sem** depl
 
 ## Ambiente
 - Rodo como usuário **`projeto`**. `/var/www` (acima daqui) é de `root` — mexer na raiz precisa de `sudo`.
-- Eventos são editados por scripts `.mjs` na worktree (não pelo `/admin`) — ver `PLAN.md`.
+- Eventos são editados no `/admin` (aba **Eventos**: dados, inscrição, capa, fotos, álbum).
+  Mudança de dado aparece no site na hora, mas o HTML prerenderizado (o que o Google lê)
+  só se atualiza no próximo `pnpm build`.
