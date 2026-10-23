@@ -5,36 +5,8 @@ import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { type EventRow as Event, TBD_DATE } from "@/lib/events";
-
-// Título exato da Mostra no banco: a seção "Para as escolas participantes" (regulamento,
-// ficha, banner) é específica dela e aparece enquanto ela estiver nos próximos eventos.
-const MOSTRA_TITLE = "Mostra Missioneira de Brinquedos Científicos";
-
-// Materiais para as escolas participantes da Mostra. `null` = ainda não disponível
-// ("Em breve"). Ao receber o arquivo, colocar em public/downloads/ e apontar o caminho aqui.
-const MOSTRA_DOWNLOADS: {
-  regulamento: string | null;
-  fichaDoc: string | null;
-  fichaPdf: string | null;
-  bannerModelo: string | null;
-  videoNaoListado: string | null; // vídeo da Camila (YouTube): como subir vídeo "não listado"
-} = {
-  regulamento: "/downloads/regulamento-mostra-bc-2026.pdf",
-  fichaDoc: "/downloads/ficha-catalografica-brinquedo-cientifico.docx",
-  fichaPdf: "/downloads/ficha-catalografica-brinquedo-cientifico.pdf",
-  // 0,80 m x 1,20 m (conferido no próprio arquivo: sldSz 28800425x43200638 EMU = 80x120 cm).
-  // A mensagem da Cris dizia "0,80cmx1,20cm" — era erro de digitação, são metros.
-  bannerModelo: "/downloads/modelo-banner-mostra-bc-2026.pptx",
-  videoNaoListado: "https://drive.google.com/file/d/1KvpWkyOfSJmPykjQsMxnIH0idOO09YwA/view", // vídeo da Camila (Google Drive)
-};
-
-// Datas importantes da Mostra (exibidas em texto) — cronograma oficial do Regulamento (Seção 7).
-const MOSTRA_DATAS: { label: string; data: string }[] = [
-  { label: "Lançamento do Regulamento", data: "02/06/2026" },
-  { label: "Inscrição das equipes", data: "15/06/2026 a 18/09/2026" },
-  { label: "Realização da Mostra, divulgação dos resultados e cerimônia de premiação", data: "16/10/2026" },
-];
+import { type EventRow as Event, type ParticipantDoc, TBD_DATE, hasParticipantInfo } from "@/lib/events";
+import { RichLine } from "@/lib/site-texts";
 
 function formatDate(dateStr?: string | null) {
   if (!dateStr || dateStr === TBD_DATE) return "A definir";
@@ -175,9 +147,21 @@ function DownloadButton({ href, label, sub }: { href: string | null; label: stri
   );
 }
 
-// Seção de materiais para as escolas participantes da Mostra (regulamento, ficha,
-// banner, datas e vídeo de apoio). Renderizada só quando a Mostra está nos próximos eventos.
-function MostraEscolas() {
+// Ícone do card pelo tipo do primeiro arquivo (PDF, Word, PowerPoint/imagem, vídeo).
+function docIcon(doc: ParticipantDoc) {
+  const f = doc.files[0];
+  const hint = `${f?.url ?? ""} ${f?.sub ?? ""}`.toLowerCase();
+  if (/youtu|drive\.google|vimeo|v[ií]deo/.test(hint)) return Youtube;
+  if (/\.docx?\b|\bdocx?\b/.test(hint)) return ClipboardList;
+  if (/\.pptx?\b|\bpptx?\b|\.png|\.jpe?g|\bjpg\b|\bpng\b/.test(hint)) return ImageIcon;
+  return FileText;
+}
+
+// Materiais para participantes de um evento (regulamento, fichas, modelos, datas
+// importantes), editados no /admin → Eventos. Aparece enquanto o evento está em
+// "Próximos eventos".
+function ParticipantSection({ ev }: { ev: Event }) {
+  const info = ev.participant_info!;
   return (
     <section className="py-20 bg-orange-50 border-y border-orange-100">
       <div className="container mx-auto px-4 md:px-6">
@@ -188,120 +172,71 @@ function MostraEscolas() {
           transition={{ duration: 0.4 }}
           className="max-w-4xl mx-auto"
         >
+          <p className="text-sm font-bold uppercase tracking-wide text-secondary mb-2">{ev.title}</p>
           <h2 className="text-3xl font-black text-foreground mb-4 border-b-4 border-secondary pb-2 inline-block">
-            Para as escolas participantes
+            {info.title?.trim() || "Para os participantes"}
           </h2>
-          <p className="text-lg text-foreground/80 leading-relaxed mb-8">
-            As escolas participantes devem consultar o <strong className="text-foreground">Regulamento</strong> da
-            Mostra e entregar o <strong className="text-foreground">Modelo de Ficha Catalográfica</strong> no
-            momento da inscrição.
-          </p>
+          {info.intro?.trim() && (
+            <p className="text-lg text-foreground/80 leading-relaxed mb-8">
+              <RichLine text={info.intro} />
+            </p>
+          )}
 
           {/* Datas importantes — destaque */}
-          <div className="bg-white rounded-2xl border-2 border-secondary/20 shadow-md overflow-hidden mb-8">
-            <div className="flex items-center gap-3 bg-gradient-to-r from-secondary to-orange-600 text-white px-6 py-4">
-              <CalendarDays className="h-7 w-7" />
-              <h3 className="text-xl md:text-2xl font-black">Datas importantes</h3>
-            </div>
-            <ul className="divide-y divide-orange-100">
-              {MOSTRA_DATAS.map((d) => (
-                <li
-                  key={d.label}
-                  className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-5 px-6 py-4 hover:bg-orange-50/60 transition-colors"
-                >
-                  <span className="inline-flex items-center justify-center shrink-0 rounded-xl bg-secondary text-white font-black text-base md:text-lg px-4 py-2 shadow-sm whitespace-nowrap self-start sm:self-auto">
-                    {d.data}
-                  </span>
-                  <span className="text-foreground font-bold text-base md:text-lg leading-snug">{d.label}</span>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Downloads — cada material em destaque */}
-          <div className="grid gap-6 sm:grid-cols-2">
-            {/* Regulamento */}
-            <div className="group bg-white rounded-2xl border border-orange-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all p-6">
-              <div className="flex items-start gap-4">
-                <div className="shrink-0 h-12 w-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
-                  <FileText className="h-6 w-6" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-black text-foreground mb-1">Regulamento</h3>
-                  <p className="text-sm text-foreground/70 mb-4">Regras completas da Mostra para as escolas participantes.</p>
-                  <DownloadButton href={MOSTRA_DOWNLOADS.regulamento} label="Baixar regulamento" sub="PDF" />
-                </div>
+          {!!info.dates?.length && (
+            <div className="bg-white rounded-2xl border-2 border-secondary/20 shadow-md overflow-hidden mb-8">
+              <div className="flex items-center gap-3 bg-gradient-to-r from-secondary to-orange-600 text-white px-6 py-4">
+                <CalendarDays className="h-7 w-7" />
+                <h3 className="text-xl md:text-2xl font-black">Datas importantes</h3>
               </div>
+              <ul className="divide-y divide-orange-100">
+                {info.dates.map((d, i) => (
+                  <li
+                    key={i}
+                    className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-5 px-6 py-4 hover:bg-orange-50/60 transition-colors"
+                  >
+                    <span className="inline-flex items-center justify-center shrink-0 rounded-xl bg-secondary text-white font-black text-base md:text-lg px-4 py-2 shadow-sm whitespace-nowrap self-start sm:self-auto">
+                      {d.date}
+                    </span>
+                    <span className="text-foreground font-bold text-base md:text-lg leading-snug">{d.label}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
+          )}
 
-            {/* Ficha catalográfica */}
-            <div className="group bg-white rounded-2xl border border-orange-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all p-6">
-              <div className="flex items-start gap-4">
-                <div className="shrink-0 h-12 w-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
-                  <ClipboardList className="h-6 w-6" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-black text-foreground mb-1">Modelo de Ficha Catalográfica</h3>
-                  <p className="text-sm text-foreground/70 mb-4">Deve ser entregue no momento da inscrição.</p>
-                  <div className="flex flex-wrap gap-3">
-                    <DownloadButton href={MOSTRA_DOWNLOADS.fichaDoc} label="Baixar ficha" sub="DOCX" />
-                    <DownloadButton href={MOSTRA_DOWNLOADS.fichaPdf} label="Baixar ficha" sub="PDF" />
+          {/* Documentos — cada um em destaque */}
+          {!!info.docs?.length && (
+            <div className="grid gap-6 sm:grid-cols-2">
+              {info.docs.map((doc, i) => {
+                const Icon = docIcon(doc);
+                return (
+                  <div key={i} className="group bg-white rounded-2xl border border-orange-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="shrink-0 h-12 w-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
+                        <Icon className="h-6 w-6" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-lg font-black text-foreground mb-1">{doc.title}</h3>
+                        {doc.description && <p className="text-sm text-foreground/70 mb-4 whitespace-pre-line">{doc.description}</p>}
+                        {doc.note && (
+                          <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 p-3 mb-4">
+                            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                            <p className="text-xs text-amber-900 leading-relaxed"><RichLine text={doc.note} /></p>
+                          </div>
+                        )}
+                        <div className="flex flex-wrap gap-3">
+                          {doc.files.map((f, j) => (
+                            <DownloadButton key={j} href={f.url} label={f.label || "Baixar"} sub={f.sub} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
+                );
+              })}
             </div>
-
-            {/* Modelo de banner */}
-            <div className="group bg-white rounded-2xl border border-orange-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all p-6">
-              <div className="flex items-start gap-4">
-                <div className="shrink-0 h-12 w-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
-                  <ImageIcon className="h-6 w-6" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-black text-foreground mb-1">Modelo de banner</h3>
-                  <p className="text-sm text-foreground/70 mb-3">Modelo para a confecção do banner de apresentação.</p>
-                  {/* Observação da coordenação: o modelo já vem no tamanho de impressão. */}
-                  <div className="flex items-start gap-2 rounded-xl bg-amber-50 border border-amber-200 p-3 mb-4">
-                    <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                    <p className="text-xs text-amber-900 leading-relaxed">
-                      <strong className="font-black">Atenção:</strong> o modelo é editável e já está nas
-                      dimensões corretas (<strong className="font-bold">0,80 m × 1,20 m</strong>).
-                      Somente preencher as informações e imprimir.
-                    </p>
-                  </div>
-                  <DownloadButton href={MOSTRA_DOWNLOADS.bannerModelo} label="Baixar modelo" sub="PPTX · 14 MB" />
-                </div>
-              </div>
-            </div>
-
-            {/* Vídeo de apoio (Camila) */}
-            <div className="group bg-white rounded-2xl border border-orange-100 shadow-sm hover:shadow-lg hover:-translate-y-0.5 transition-all p-6">
-              <div className="flex items-start gap-4">
-                <div className="shrink-0 h-12 w-12 rounded-xl bg-secondary/10 text-secondary flex items-center justify-center group-hover:bg-secondary group-hover:text-white transition-colors">
-                  <Youtube className="h-6 w-6" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-lg font-black text-foreground mb-1">Vídeo de apoio</h3>
-                  {MOSTRA_DOWNLOADS.videoNaoListado ? (
-                    <a
-                      href={MOSTRA_DOWNLOADS.videoNaoListado}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm text-secondary font-semibold hover:underline"
-                    >
-                      <ArrowRight className="h-4 w-4 shrink-0" />
-                      Aprenda a enviar um vídeo como "não listado" no YouTube e copiar o link para compartilhamento.
-                    </a>
-                  ) : (
-                    <p className="text-sm text-foreground/70">
-                      Aprenda a enviar um vídeo como "não listado" no YouTube e copiar o link para compartilhamento.
-                      <span className="block mt-1 text-xs font-semibold text-gray-400">Em breve</span>
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+          )}
         </motion.div>
       </div>
     </section>
@@ -458,8 +393,8 @@ export default function Events() {
         </div>
       </section>
 
-      {/* Materiais para as escolas participantes da Mostra */}
-      {!loading && upcoming.some(e => e.title === MOSTRA_TITLE) && <MostraEscolas />}
+      {/* Materiais para participantes (regulamento, fichas, datas) dos próximos eventos */}
+      {!loading && upcoming.filter(e => hasParticipantInfo(e.participant_info)).map(e => <ParticipantSection key={e.id} ev={e} />)}
 
       {/* Eventos Passados */}
       <section className="py-20 bg-gray-50">

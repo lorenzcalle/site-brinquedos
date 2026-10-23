@@ -69,6 +69,9 @@ Tabelas (todas com RLS fechado — público só lê o que deve, admin gerencia):
   do `/admin`. Inscrição (`registration_url`, `registration_deadline`), álbum do Drive
   (`album_url`, `album_label`) e fotos (`photos` jsonb `[{mini, full}]`) são colunas —
   ver `supabase/eventos-admin.sql`. Fotos novas vão para o bucket `event-media`.
+  `participant_info` (jsonb) = materiais para participantes (datas, documentos) que
+  aparecem enquanto o evento é “Próximo” — `supabase/eventos-materiais.sql`; arquivos no
+  bucket `event-files` (até 50 MB).
 - **`team_groups`**, **`team_members`** — equipe (ordem por `position`). **`site_texts`** —
   textos das páginas (key → value). Ver `supabase/equipe-e-textos.sql`.
 - **`materials`** — vídeos tutoriais (YouTube). Público lê. Campos: id, title,

@@ -3,9 +3,11 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import {
   type EventPhoto, type EventRow, TBD_DATE, today,
+  type ParticipantInfo, eventFileUrls,
   normalizeDriveFolder, uploadEventPhoto, uploadEventCover, removeEventFiles,
 } from "@/lib/events";
 import { Field, SectionHeader, inputCls, useConfirm } from "./ui";
+import { ParticipantEditor, cleanParticipantInfo } from "./participant-editor";
 import { Trash2, Loader2, Pencil, Plus, X, ImagePlus, ArrowLeft, ArrowRight, CalendarCheck, AlertTriangle, ExternalLink } from "lucide-react";
 
 type Form = {
@@ -22,11 +24,12 @@ type Form = {
   album_label: string;
   image_url: string | null;
   photos: EventPhoto[];
+  participant: ParticipantInfo;
 };
 
 const emptyForm: Form = {
   title: "", date: "", dateTbd: false, time: "", location: "", description: "", type: "upcoming",
-  registration_url: "", registration_deadline: "", album_url: "", album_label: "", image_url: null, photos: [],
+  registration_url: "", registration_deadline: "", album_url: "", album_label: "", image_url: null, photos: [], participant: {},
 };
 
 function formatDate(d?: string | null) {
@@ -93,6 +96,7 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
       album_label: ev.album_label ?? "",
       image_url: ev.image_url ?? null,
       photos: ev.photos ?? [],
+      participant: ev.participant_info ?? {},
     };
     setEditingId(ev.id);
     setIsNew(false);
@@ -169,6 +173,7 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
       album_label: form.album_label.trim() || null,
       image_url: form.image_url,
       photos: form.photos,
+      participant_info: cleanParticipantInfo(form.participant),
     };
     const { error } = isNew
       ? await supabase.from("events").insert([{ id: editingId, ...payload }])
@@ -179,8 +184,8 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
       return;
     }
     // Salvo: apaga do bucket o que foi tirado (capa trocada, fotos removidas).
-    const kept = new Set([form.image_url, ...form.photos.flatMap(p => [p.mini, p.full])]);
-    const before = [original.image_url, ...original.photos.flatMap(p => [p.mini, p.full]), ...uploadedNow.current];
+    const kept = new Set(eventFileUrls({ image_url: form.image_url, photos: form.photos, participant_info: payload.participant_info }));
+    const before = [...eventFileUrls({ image_url: original.image_url, photos: original.photos, participant_info: original.participant }), ...uploadedNow.current];
     await removeEventFiles(before.filter(u => u && !kept.has(u)));
     uploadedNow.current = [];
     setEditingId(null);
@@ -203,7 +208,7 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
     if (!(await confirm(`Excluir o evento "${ev.title}"?`, "Ele sai da página Eventos e as fotos enviadas por aqui são apagadas. Isso não pode ser desfeito."))) return;
     setBusyId(ev.id);
     const { error } = await supabase.from("events").delete().eq("id", ev.id);
-    if (!error) await removeEventFiles([ev.image_url, ...(ev.photos ?? []).flatMap(p => [p.mini, p.full])]);
+    if (!error) await removeEventFiles(eventFileUrls(ev));
     setBusyId(null);
     if (error) return void toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
     toast({ title: "Evento excluído", description: ev.title });
@@ -386,6 +391,14 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
                   </a>
                 )}
               </fieldset>
+
+              <ParticipantEditor
+                eventId={editingId}
+                value={form.participant}
+                onChange={v => set("participant", v)}
+                onUploaded={url => uploadedNow.current.push(url)}
+                onBusy={d => setUploading(n => n + d)}
+              />
             </div>
 
             <div className="flex gap-3 mt-6">

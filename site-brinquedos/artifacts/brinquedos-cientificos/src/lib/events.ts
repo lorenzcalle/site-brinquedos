@@ -3,6 +3,20 @@ import { cropToJpeg } from "@/lib/image";
 
 export type EventPhoto = { mini: string; full: string };
 
+// Materiais para participantes (regulamento, fichas, modelos, datas importantes),
+// exibidos na página Eventos enquanto o evento está em "Próximos".
+export type ParticipantFile = { label: string; url: string | null; sub?: string }; // url null = "Em breve"
+export type ParticipantDoc = { title: string; description?: string; note?: string; files: ParticipantFile[] };
+export type ParticipantInfo = {
+  title?: string; // padrão "Para os participantes"
+  intro?: string; // aceita **negrito**
+  dates?: { label: string; date: string }[]; // date é texto livre ("15/06/2026 a 18/09/2026")
+  docs?: ParticipantDoc[];
+};
+
+export const hasParticipantInfo = (p?: ParticipantInfo | null) =>
+  !!p && !!(p.intro?.trim() || p.dates?.length || p.docs?.length);
+
 // Linha da tabela `events`. Os campos de inscrição, álbum e fotos vieram de constantes
 // do events.tsx (chaveadas pelo título) e hoje são editados no /admin — ver
 // site-brinquedos/supabase/eventos-admin.sql.
@@ -20,6 +34,7 @@ export type EventRow = {
   album_url?: string | null; // pasta do Drive, forma drive.google.com/drive/folders/<id>
   album_label?: string | null; // texto do botão; vazio = "Confira as fotos e vídeos"
   photos?: EventPhoto[] | null;
+  participant_info?: ParticipantInfo | null;
 };
 
 // A coluna `date` é NOT NULL; eventos com data a confirmar usam esta data-placeholder,
@@ -57,11 +72,41 @@ export async function uploadEventCover(eventId: string, file: File): Promise<str
   return upload(`${eventId}/capa-${Date.now()}.jpg`, await cropToJpeg(file, 1200, 675));
 }
 
-// Apaga do bucket os arquivos que são dele (fotos antigas em /fotos-eventos ficam).
-export async function removeEventFiles(urls: (string | null | undefined)[]) {
-  const marker = `/storage/v1/object/public/${EVENT_BUCKET}/`;
-  const paths = urls
-    .filter((u): u is string => !!u && u.includes(marker))
-    .map(u => decodeURIComponent(u.slice(u.indexOf(marker) + marker.length)));
-  if (paths.length) await supabase.storage.from(EVENT_BUCKET).remove(paths);
+// Documentos (PDF, Word, PowerPoint…) vão para outro bucket, sem restrição de tipo de
+// imagem e com limite de 50 MB. O nome original é mantido para o download sair legível.
+export const EVENT_FILES_BUCKET = "event-files";
+
+const SIZE_FMT = (bytes: number) =>
+  bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(bytes >= 10 * 1024 * 1024 ? 0 : 1).replace(".", ",")} MB` : `${Math.max(1, Math.round(bytes / 1024))} KB`;
+
+export async function uploadEventDocument(eventId: string, file: File): Promise<ParticipantFile & { url: string }> {
+  const safe = file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w.-]+/g, "-").toLowerCase();
+  const path = `${eventId}/${Date.now()}/${safe}`;
+  const { error } = await supabase.storage.from(EVENT_FILES_BUCKET).upload(path, file, { contentType: file.type || undefined });
+  if (error) throw error;
+  const ext = (safe.split(".").pop() ?? "").toUpperCase();
+  return {
+    label: "",
+    url: supabase.storage.from(EVENT_FILES_BUCKET).getPublicUrl(path).data.publicUrl,
+    sub: [ext, SIZE_FMT(file.size)].filter(Boolean).join(" · "),
+  };
 }
+
+// Apaga dos buckets do evento os arquivos que são deles (fotos antigas em /fotos-eventos
+// e arquivos em /downloads ficam).
+export async function removeEventFiles(urls: (string | null | undefined)[]) {
+  for (const bucket of [EVENT_BUCKET, EVENT_FILES_BUCKET]) {
+    const marker = `/storage/v1/object/public/${bucket}/`;
+    const paths = urls
+      .filter((u): u is string => !!u && u.includes(marker))
+      .map(u => decodeURIComponent(u.slice(u.indexOf(marker) + marker.length)));
+    if (paths.length) await supabase.storage.from(bucket).remove(paths);
+  }
+}
+
+// Todos os arquivos guardados por um evento (para limpar ao excluir/trocar).
+export const eventFileUrls = (ev: Pick<EventRow, "image_url" | "photos" | "participant_info">) => [
+  ev.image_url,
+  ...(ev.photos ?? []).flatMap(p => [p.mini, p.full]),
+  ...(ev.participant_info?.docs ?? []).flatMap(d => d.files.map(f => f.url)),
+];
