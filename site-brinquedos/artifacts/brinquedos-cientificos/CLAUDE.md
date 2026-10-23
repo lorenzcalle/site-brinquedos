@@ -89,6 +89,21 @@ Buckets de storage: `toy-images`, `toy-guides` (leitura pública; insert públic
 `event-media` (leitura pública; escrita só logado — fotos e capas de eventos);
 `site-media` (idem — fotos da equipe e imagens dos textos, como o banner da home).
 
+## Contas e histórico (Fase C do painel)
+
+- Cada pessoa tem login próprio. **/admin → Acesso ao painel** grava pedidos em
+  `account_requests`; `scripts/accounts-worker.mjs` (cron `# bc-accounts`, a cada minuto)
+  cria a conta / troca a senha / remove com a chave secreta, lida de
+  `~/.config/bc-site/service-role.env` (modo 600, fora do git). Sem e-mail: senha
+  provisória repassada pela pessoa que convidou; `user_metadata.must_change_password`
+  obriga a criar a própria senha no 1º acesso. Log em `~/.local/state/bc-site/accounts.log`.
+- **`activity_log`** é preenchido por gatilhos no banco (`supabase/painel-acesso.sql`) em
+  toys, events, materials, team_*, site_texts, submissions e publish_requests. O Início
+  mostra "Últimas alterações"; as janelas mostram quem alterou por último; o Publicar
+  conta as alterações depois da última publicação.
+- Cadastro público do Supabase Auth deve ficar **desligado** (Authentication → Sign In /
+  Providers → "Allow new users to sign up"), senão qualquer um vira `authenticated`.
+
 ## Deploy
 
 **Botão “Publicar” do /admin**: grava em `publish_requests`; o cron do usuário `projeto`

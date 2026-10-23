@@ -96,6 +96,7 @@ export function TextsAdmin() {
     toast({ title: "Textos salvos", description: `${changed.length} campo(s) em ${page.page}. Já aparecem no site.` });
     loadSiteTexts(true);
     load();
+    window.dispatchEvent(new Event("admin:changed"));
   };
 
   if (loading) return <Loading />;

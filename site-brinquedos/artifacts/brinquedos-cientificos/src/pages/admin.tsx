@@ -5,6 +5,7 @@ import logoImg from "@/assets/images/logo-principal.png";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
   Loader2, LogOut, Home, Puzzle, Inbox, Video, CalendarDays, Users, Type, Atom, Menu, ExternalLink, Eye, EyeOff, ArrowLeft,
+  KeyRound, LifeBuoy,
 } from "lucide-react";
 import { Dashboard } from "@/components/admin/dashboard";
 import { ToysAdmin } from "@/components/admin/toys-admin";
@@ -14,9 +15,12 @@ import { EventsAdmin } from "@/components/admin/events-admin";
 import { TeamAdmin } from "@/components/admin/team-admin";
 import { TextsAdmin } from "@/components/admin/texts-admin";
 import { PublishButton } from "@/components/admin/publish-button";
+import { AccessAdmin } from "@/components/admin/access-admin";
+import { HelpAdmin } from "@/components/admin/help-admin";
+import { AccountModal, FirstPasswordScreen } from "@/components/admin/account";
 import { btn, inputCls } from "@/components/admin/ui";
 
-export type Section = "inicio" | "brinquedos" | "submissoes" | "videos" | "eventos" | "equipe" | "textos";
+export type Section = "inicio" | "brinquedos" | "submissoes" | "videos" | "eventos" | "equipe" | "textos" | "acesso" | "ajuda";
 
 const SECTIONS: { key: Section; label: string; icon: typeof Home; group?: string }[] = [
   { key: "inicio", label: "Início", icon: Home },
@@ -26,6 +30,8 @@ const SECTIONS: { key: Section; label: string; icon: typeof Home; group?: string
   { key: "eventos", label: "Eventos", icon: CalendarDays, group: "Conteúdo" },
   { key: "equipe", label: "Equipe", icon: Users, group: "Páginas" },
   { key: "textos", label: "Textos do site", icon: Type, group: "Páginas" },
+  { key: "acesso", label: "Acesso ao painel", icon: KeyRound, group: "Painel" },
+  { key: "ajuda", label: "Ajuda", icon: LifeBuoy, group: "Painel" },
 ];
 
 // A seção fica no endereço (/admin#eventos): recarregar a página não volta para o início.
@@ -46,8 +52,8 @@ function Logo() {
 }
 
 // Menu lateral (no computador fica fixo; no celular abre por cima pelo botão ☰).
-function SideNav({ section, counts, go, email, onLogout }: {
-  section: Section; counts: Counts; go: (s: Section) => void; email: string; onLogout: () => void;
+function SideNav({ section, counts, go, email, name, onLogout, onAccount }: {
+  section: Section; counts: Counts; go: (s: Section) => void; email: string; name: string; onLogout: () => void; onAccount: () => void;
 }) {
   let lastGroup: string | undefined;
   return (
@@ -85,11 +91,17 @@ function SideNav({ section, counts, go, email, onLogout }: {
         <a href="/" target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 px-3 py-2.5 rounded-xl font-bold text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900">
           <ExternalLink className="h-5 w-5 text-gray-400" /> Ver o site
         </a>
-        <div className="flex items-center gap-3 px-3 py-2">
-          <span className="h-8 w-8 rounded-full bg-orange-100 text-orange-700 font-black text-sm flex items-center justify-center shrink-0" aria-hidden>
-            {email.charAt(0).toUpperCase()}
-          </span>
-          <span className="flex-1 min-w-0 text-xs text-gray-500 truncate" title={email}>{email}</span>
+        <div className="flex items-center gap-1">
+          <button onClick={onAccount} title="Minha conta: nome e senha"
+            className="flex-1 min-w-0 flex items-center gap-3 px-3 py-2 rounded-xl text-left hover:bg-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
+            <span className="h-8 w-8 rounded-full bg-orange-100 text-orange-700 font-black text-sm flex items-center justify-center shrink-0" aria-hidden>
+              {(name || email).charAt(0).toUpperCase()}
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-bold text-gray-800 truncate">{name || "Minha conta"}</span>
+              <span className="block text-xs text-gray-500 truncate">{email}</span>
+            </span>
+          </button>
           <button onClick={onLogout} className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100" title="Sair" aria-label="Sair">
             <LogOut className="h-4 w-4" />
           </button>
@@ -103,6 +115,7 @@ function LoginScreen() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [forgot, setForgot] = useState(false);
   const [error, setError] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
 
@@ -142,6 +155,15 @@ function LoginScreen() {
           {loggingIn && <Loader2 className="h-5 w-5 animate-spin" />}
           {loggingIn ? "Entrando..." : "Entrar"}
         </button>
+        <button type="button" onClick={() => setForgot(f => !f)} aria-expanded={forgot} className="text-sm font-bold text-orange-600 hover:underline">
+          Esqueci minha senha
+        </button>
+        {forgot && (
+          <p className="text-sm text-gray-600 bg-gray-50 rounded-xl px-4 py-3">
+            Peça para outra pessoa que tem acesso ao painel abrir <strong>Acesso ao painel</strong>, clicar no ⋯ ao lado do
+            seu nome e em <strong>Gerar senha provisória</strong>. Com ela você entra e cria uma senha nova.
+          </p>
+        )}
       </form>
       <a href="/" className="mt-6 inline-flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-gray-800">
         <ArrowLeft className="h-4 w-4" /> Voltar ao site
@@ -160,6 +182,7 @@ export default function Admin() {
   const [startNew, setStartNew] = useState(false); // atalho "Novo …" do Início
   const [counts, setCounts] = useState<Counts>({});
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
 
   // ─── Sessão ────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -189,6 +212,7 @@ export default function Admin() {
   };
 
   const loadCounts = async () => {
+    window.dispatchEvent(new Event("admin:changed")); // o botão Publicar reconta as alterações
     const head = { count: "exact" as const, head: true };
     const [t, s, v, e, m] = await Promise.all([
       supabase.from("toys").select("id", head).eq("status", "approved"),
@@ -210,11 +234,15 @@ export default function Admin() {
   );
 
   if (!session) return <LoginScreen />;
+  // Entrou com senha provisória: cria a própria antes de usar o painel.
+  if (session.user.user_metadata?.must_change_password) return <FirstPasswordScreen user={session.user} />;
 
   const email = session.user.email ?? "";
+  const name: string = session.user.user_metadata?.name ?? "";
   const current = SECTIONS.find(s => s.key === section)!;
   const sectionProps = { onChange: loadCounts, startNew, onStarted: () => setStartNew(false) };
-  const nav = <SideNav section={section} counts={counts} go={go} email={email} onLogout={handleLogout} />;
+  const openAccount = () => { setMenuOpen(false); setAccountOpen(true); };
+  const nav = <SideNav section={section} counts={counts} go={go} email={email} name={name} onLogout={handleLogout} onAccount={openAccount} />;
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
@@ -247,7 +275,10 @@ export default function Admin() {
           {section === "eventos" && <EventsAdmin {...sectionProps} />}
           {section === "equipe" && <TeamAdmin onChange={loadCounts} />}
           {section === "textos" && <TextsAdmin />}
+          {section === "acesso" && <AccessAdmin me={email} onOpenAccount={openAccount} />}
+          {section === "ajuda" && <HelpAdmin go={go} />}
         </main>
+        {accountOpen && <AccountModal user={session.user} onClose={() => setAccountOpen(false)} />}
       </div>
     </div>
   );

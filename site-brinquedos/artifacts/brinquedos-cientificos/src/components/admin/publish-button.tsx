@@ -25,6 +25,7 @@ export function PublishButton() {
   const [latestId, setLatestId] = useState(0);
   const [requesting, setRequesting] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [unpublished, setUnpublished] = useState(0); // alterações depois da última publicação
   const timer = useRef<number | undefined>(undefined);
 
   const refresh = async () => {
@@ -35,6 +36,13 @@ export function PublishButton() {
     ]);
     setStatus(s);
     setLatestId(r.data?.[0]?.id ?? 0);
+    // O que muda as páginas públicas (envio recebido e contas não contam).
+    const since = s?.finishedAt ?? s?.startedAt;
+    if (since) {
+      const c = await supabase.from("activity_log").select("id", { count: "exact", head: true })
+        .gt("at", since).not("entity", "in", "(site,acesso,envio)");
+      setUnpublished(c.error ? 0 : c.count ?? 0);
+    }
     setLoaded(true);
   };
 
@@ -45,6 +53,10 @@ export function PublishButton() {
   // Enquanto há publicação em andamento, consulta a cada 5 s; parado, a cada minuto.
   useEffect(() => {
     refresh();
+    const onChange = () => refresh();
+    window.addEventListener("admin:changed", onChange);
+    window.addEventListener("focus", onChange);
+    return () => { window.removeEventListener("admin:changed", onChange); window.removeEventListener("focus", onChange); };
   }, []);
   useEffect(() => {
     window.clearInterval(timer.current);
@@ -76,8 +88,11 @@ export function PublishButton() {
   else if (building) line = <span className="inline-flex items-center gap-1"><Loader2 className="h-3.5 w-3.5 animate-spin" /> Publicando desde {hora(status.startedAt)} (~1 min)</span>;
   else if (queued) line = <span className="inline-flex items-center gap-1"><Clock className="h-3.5 w-3.5" /> Na fila — começa em até 1 min</span>;
   else if (status.ok === false) line = <span className="inline-flex items-center gap-1"><AlertTriangle className="h-3.5 w-3.5" /> Falhou em {hora(status.finishedAt)}</span>;
-  else if (status.finishedAt) line = <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5" /> Publicado em {hora(status.finishedAt)}</span>;
+  else if (unpublished > 0) line = <span className="inline-flex items-center gap-1 text-orange-700 font-semibold">{unpublished} {unpublished === 1 ? "alteração ainda não está" : "alterações ainda não estão"} no Google</span>;
+  else if (status.finishedAt) line = <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-green-600" /> Tudo publicado ({hora(status.finishedAt)})</span>;
   else line = "Ainda não publicado pelo painel";
+
+  const hot = unpublished > 0 && !busy && !requesting;
 
   return (
     <div className="flex items-center gap-3">
@@ -86,9 +101,12 @@ export function PublishButton() {
         onClick={publish}
         disabled={busy || requesting || !loaded}
         title="As mudanças já aparecem para quem visita o site. Publicar atualiza a versão que o Google e as prévias de link (WhatsApp) leem, e cria a página de brinquedos novos para o Google."
-        className="inline-flex items-center gap-2 bg-white border-2 border-gray-200 hover:border-orange-300 hover:bg-orange-50 disabled:opacity-70 text-gray-800 px-4 py-2 rounded-xl font-bold text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
+        className={`inline-flex items-center gap-2 border-2 disabled:opacity-70 px-4 py-2 rounded-xl font-bold text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${
+          hot ? "bg-orange-500 border-orange-500 hover:bg-orange-600 text-white" : "bg-white border-gray-200 hover:border-orange-300 hover:bg-orange-50 text-gray-800"}`}
       >
-        {busy || requesting ? <Loader2 className="h-4 w-4 animate-spin text-orange-500" /> : <Rocket className="h-4 w-4 text-orange-500" />} {busy ? "Publicando…" : "Publicar"}
+        {busy || requesting ? <Loader2 className={`h-4 w-4 animate-spin ${hot ? "" : "text-orange-500"}`} /> : <Rocket className={`h-4 w-4 ${hot ? "" : "text-orange-500"}`} />}
+        {busy ? "Publicando…" : "Publicar"}
+        {hot && <span className="sm:hidden text-xs bg-white/25 rounded-full px-1.5">{unpublished}</span>}
       </button>
     </div>
   );

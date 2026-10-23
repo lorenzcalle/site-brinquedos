@@ -9,6 +9,7 @@ import {
   DropHint, DropZone, EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, TagInput, btn, cardCls, inputCls,
   useConfirm, useFieldErrors,
 } from "./ui";
+import { LastChange } from "./last-change";
 
 type Form = {
   title: string;
@@ -175,6 +176,7 @@ export function ToysAdmin({ onChange, startNew, onStarted }: { onChange: () => v
     setBusyId(null);
     if (error) return void toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
     load();
+    onChange();
   };
 
   const remove = async (toy: Toy) => {
@@ -250,6 +252,7 @@ export function ToysAdmin({ onChange, startNew, onStarted }: { onChange: () => v
           busy={!!uploading}
           dirty={JSON.stringify(form) !== JSON.stringify(original)}
           saveLabel={modal === "new" ? "Publicar" : "Salvar"}
+          note={<LastChange entity="brinquedo" id={modal === "new" ? null : modal} />}
         >
           <Field label="Nome do brinquedo" required error={errors.title}>
             <input value={form.title} onChange={e => set("title", e.target.value)} placeholder="Ex: Carrinho Solar" className={inputCls} />

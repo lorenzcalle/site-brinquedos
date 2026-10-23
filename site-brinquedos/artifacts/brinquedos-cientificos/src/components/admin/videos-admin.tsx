@@ -5,6 +5,7 @@ import { videoThumb, isVideoUrl } from "@/lib/utils";
 import { VIDEO_CATEGORIES, VIDEO_LEVELS } from "@/lib/data";
 import { Trash2, Pencil, Plus, Video, Search, ExternalLink } from "lucide-react";
 import { EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, btn, cardCls, inputCls, useConfirm, useFieldErrors } from "./ui";
+import { LastChange } from "./last-change";
 
 type Material = {
   id: string;
@@ -151,6 +152,7 @@ export function VideosAdmin({ onChange, startNew, onStarted }: { onChange: () =>
       {modal && (
         <Modal
           title={modal === "new" ? "Novo vídeo" : "Editar vídeo"}
+          note={<LastChange entity="video" id={modal === "new" ? null : modal} />}
           onClose={() => setModal(null)}
           onSave={save}
           saving={saving}

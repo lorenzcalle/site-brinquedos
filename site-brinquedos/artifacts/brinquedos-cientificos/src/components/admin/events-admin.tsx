@@ -10,6 +10,7 @@ import {
   DragHandle, DropHint, DropZone, EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, PillTabs, SectionHeader, SubHeading,
   btn, cardCls, inputCls, moveItem, useConfirm, useDragSort, useFieldErrors,
 } from "./ui";
+import { LastChange } from "./last-change";
 import { ParticipantEditor, cleanParticipantInfo } from "./participant-editor";
 import { Trash2, Pencil, Plus, ImagePlus, ArrowLeft, ArrowRight, CalendarCheck, CalendarX, ExternalLink, Info } from "lucide-react";
 
@@ -305,6 +306,7 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
           saving={saving}
           busy={uploading > 0}
           dirty={JSON.stringify(form) !== JSON.stringify(original)}
+          note={<LastChange entity="evento" id={isNew ? null : editingId} />}
           toolbar={
             <PillTabs<Tab> label="Partes do evento" value={tab} onChange={setTab} className="mb-3 !flex-nowrap max-w-full overflow-x-auto" items={[
               { key: "info", label: "Informações", alert: errTabs.has("info") },

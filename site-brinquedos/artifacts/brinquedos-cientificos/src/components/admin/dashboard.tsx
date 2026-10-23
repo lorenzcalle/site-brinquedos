@@ -3,9 +3,10 @@ import { supabase } from "@/lib/supabase";
 import { type EventRow, isPast, today } from "@/lib/events";
 import { type Toy } from "@/lib/types";
 import { HOME_FEATURED_SLOTS } from "@/lib/toys";
-import { Inbox, Puzzle, Video, CalendarDays, AlertTriangle, Info, Plus, ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";
+import { History, LifeBuoy, Inbox, Puzzle, Video, CalendarDays, AlertTriangle, Info, Plus, ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";
 import type { Section } from "@/pages/admin";
 import { Loading, SectionHeader, SubHeading, btn } from "./ui";
+import { type Activity, describe, fetchActivity, fetchAdminUsers, fullDate, namesByEmail, timeAgo } from "@/lib/activity";
 
 type Alert = { tone: "warn" | "info"; text: string; action: string; go: Section };
 
@@ -19,6 +20,8 @@ export function Dashboard({ go }: { go: (s: Section, startNew?: boolean) => void
   const [events, setEvents] = useState<EventRow[]>([]);
   const [videos, setVideos] = useState(0);
   const [pending, setPending] = useState(0);
+  const [activity, setActivity] = useState<Activity[]>([]);
+  const [names, setNames] = useState<Record<string, string>>({});
 
   useEffect(() => {
     Promise.all([
@@ -33,6 +36,9 @@ export function Dashboard({ go }: { go: (s: Section, startNew?: boolean) => void
       setPending(s.count ?? 0);
       setLoading(false);
     });
+    // Histórico: não segura a tela (e fica vazio até o SQL da Fase C rodar).
+    fetchActivity(12).then(setActivity);
+    fetchAdminUsers().then(u => setNames(namesByEmail(u)));
   }, []);
 
   if (loading) return <Loading />;
@@ -120,6 +126,35 @@ export function Dashboard({ go }: { go: (s: Section, startNew?: boolean) => void
           </button>
         ))}
       </div>
+
+      {/* Últimas alterações */}
+      <SubHeading className="mt-10">Últimas alterações</SubHeading>
+      <div className="bg-white rounded-2xl border border-gray-200/80 shadow-sm overflow-hidden">
+        {activity.length === 0 ? (
+          <p className="px-5 py-4 text-sm text-gray-500">Ainda não há alterações registradas. A partir de agora, tudo o que for salvo aparece aqui, com quem fez e quando.</p>
+        ) : (
+          <ul className="divide-y divide-gray-100">
+            {activity.map(a => {
+              const d = describe(a, names);
+              return (
+                <li key={a.id} className="flex items-start gap-3 px-5 py-3">
+                  <History className="h-4 w-4 text-gray-400 mt-0.5 shrink-0" />
+                  <p className="flex-1 min-w-0 text-sm text-gray-700"><strong className="text-gray-900">{d.who}</strong> {d.what}</p>
+                  <time dateTime={a.at} title={fullDate(a.at)} className="text-xs text-gray-500 shrink-0 whitespace-nowrap">{timeAgo(a.at)}</time>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
+
+      <button onClick={() => go("ajuda")} className="mt-8 w-full flex items-center gap-4 text-left bg-blue-50 hover:bg-blue-100 border border-blue-100 rounded-2xl p-5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500">
+        <LifeBuoy className="h-8 w-8 text-blue-500 shrink-0" />
+        <span>
+          <span className="block font-bold text-blue-950">Precisa de ajuda?</span>
+          <span className="block text-sm text-blue-900/80">Passo a passo para criar evento, colocar fotos, cadastrar brinquedo, dar acesso a alguém e mais.</span>
+        </span>
+      </button>
     </>
   );
 }

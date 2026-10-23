@@ -9,6 +9,7 @@ import {
   DragHandle, DropZone, EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, btn, cardCls, inputCls,
   moveItem, useConfirm, useDragSort, useFieldErrors,
 } from "./ui";
+import { LastChange } from "./last-change";
 
 type MemberForm = { group_id: string; name: string; role: string; bio: string; photo_url: string | null };
 type GroupForm = { title: string; subtitle: string };
@@ -272,6 +273,7 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
       {memberModal && (
         <Modal
           title={memberModal === "new" ? "Adicionar pessoa" : "Editar pessoa"}
+          note={<LastChange entity="pessoa" id={memberModal === "new" ? null : memberModal} />}
           onClose={closeMember}
           onSave={saveMember}
           saving={saving}
@@ -311,6 +313,7 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
       {groupModal && (
         <Modal
           title={groupModal === "new" ? "Novo grupo" : "Editar grupo"}
+          note={<LastChange entity="grupo" id={groupModal === "new" ? null : groupModal} />}
           onClose={() => setGroupModal(null)}
           onSave={saveGroup}
           saving={saving}

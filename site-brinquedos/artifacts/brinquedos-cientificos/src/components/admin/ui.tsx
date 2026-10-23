@@ -224,8 +224,9 @@ export function DragHandle(props: React.HTMLAttributes<HTMLSpanElement>) {
 
 // Janela de edição. Fecha com Esc, clique fora, X ou Cancelar — e, se houver mudança
 // não salva (`dirty`), pergunta antes de descartar. Enquanto `busy` (upload), não fecha.
-export function Modal({ title, onClose, onSave, saving, busy, dirty, saveLabel = "Salvar", wide, toolbar, children }: {
+export function Modal({ title, onClose, onSave, saving, busy, dirty, saveLabel = "Salvar", wide, toolbar, note, children }: {
   title: string;
+  note?: React.ReactNode; // texto discreto no rodapé (ex.: quem alterou por último)
   toolbar?: React.ReactNode; // fica fixo abaixo do título (ex.: abas)
   onClose: () => void;
   onSave: () => void;
@@ -269,7 +270,9 @@ export function Modal({ title, onClose, onSave, saving, busy, dirty, saveLabel =
           {toolbar && <div className="px-6 pt-3 border-b border-gray-100">{toolbar}</div>}
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-5 space-y-4 [&_fieldset]:min-w-0">{children}</div>
           <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-100 bg-gray-50/80 sm:rounded-b-2xl">
-            {busy && <span className="mr-auto text-sm text-orange-600 inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Enviando arquivo…</span>}
+            {busy
+              ? <span className="mr-auto text-sm text-orange-600 inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Enviando arquivo…</span>
+              : note && <span className="mr-auto min-w-0">{note}</span>}
             <button type="button" onClick={requestClose} disabled={busy || saving} className={btn.secondary}>Cancelar</button>
             <button type="button" onClick={onSave} disabled={saving || busy} className={btn.primary}>
               {saving && <Loader2 className="h-5 w-5 animate-spin" />} {saveLabel}
