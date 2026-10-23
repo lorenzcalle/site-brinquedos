@@ -10,6 +10,7 @@ import { VideosAdmin } from "@/components/admin/videos-admin";
 import { EventsAdmin } from "@/components/admin/events-admin";
 import { TeamAdmin } from "@/components/admin/team-admin";
 import { TextsAdmin } from "@/components/admin/texts-admin";
+import { PublishButton } from "@/components/admin/publish-button";
 
 export type Section = "inicio" | "brinquedos" | "submissoes" | "videos" | "eventos" | "equipe" | "textos";
 
@@ -138,17 +139,20 @@ export default function Admin() {
       {/* Header */}
       <div className="bg-orange-500 pt-16 pb-8 text-white relative overflow-hidden">
         <div className="absolute top-0 right-0 w-64 h-64 rounded-full bg-white/5 -translate-y-1/2 translate-x-1/2" />
-        <div className="max-w-6xl mx-auto px-4 relative z-10 flex items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto px-4 relative z-10 flex flex-wrap items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl md:text-4xl font-black">Painel do site</h1>
             <p className="text-white/80 text-sm mt-1">{session.user.email}</p>
           </div>
+          <div className="flex items-start gap-3">
+          <PublishButton />
           <button
             onClick={handleLogout}
             className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 px-4 py-2 rounded-xl font-bold text-sm transition-colors"
           >
             <LogOut className="h-4 w-4" /> Sair
           </button>
+          </div>
         </div>
       </div>
 

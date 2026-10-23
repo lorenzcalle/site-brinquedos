@@ -23,7 +23,8 @@ export default defineConfig({
   },
   root: path.resolve(import.meta.dirname),
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    // BUILD_OUT_DIR: o scripts/publicar.sh gera numa pasta à parte e só troca no fim.
+    outDir: path.resolve(import.meta.dirname, process.env.BUILD_OUT_DIR ?? "dist/public"),
     emptyOutDir: true,
   },
   server: {

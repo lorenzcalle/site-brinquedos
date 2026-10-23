@@ -31,7 +31,7 @@ import { spawn } from "node:child_process";
 import { ROUTE_META, SITE_URL, toyMeta, injectHead } from "../seo-routes.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
-const OUT_DIR = path.join(ROOT, "dist/public");
+const OUT_DIR = path.resolve(ROOT, process.env.BUILD_OUT_DIR ?? "dist/public");
 
 // ---------------------------------------------------------------- Chromium
 

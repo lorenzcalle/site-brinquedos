@@ -81,6 +81,13 @@ Buckets de storage: `toy-images`, `toy-guides` (leitura pública; insert públic
 
 ## Deploy
 
+**Botão “Publicar” do /admin**: grava em `publish_requests`; o cron do usuário `projeto`
+roda `scripts/publish-worker.mjs` a cada minuto, que chama `scripts/publicar.sh` (build em
+`dist/next` + troca no fim, sem derrubar o site; `flock` evita dois builds) e escreve
+`dist/public/publish-status.json`. Log em `~/.local/state/bc-site/publish.log`.
+Para deploy de código, prefira `pnpm build:site` a `pnpm build` (este último apaga o
+dist/public no início e o site fica ~1 min fora).
+
 O site é servido pelo nginx a partir de `dist/public` no checkout principal
 (`/var/www/bc.san.uri.br/...`). Fluxo:
 
