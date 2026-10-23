@@ -5,7 +5,7 @@ import { type Toy } from "@/lib/types";
 import { fitToJpeg, uniqueName } from "@/lib/image";
 import { Trash2, Loader2, Pencil, Plus, Search, Star, FileText, ImagePlus, ExternalLink } from "lucide-react";
 import { HOME_FEATURED_SLOTS, removeToyFiles, toArray } from "@/lib/toys";
-import { Field, Modal, SectionHeader, inputCls, useConfirm } from "./ui";
+import { EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, btn, cardCls, inputCls, useConfirm } from "./ui";
 
 type Form = {
   title: string;
@@ -191,7 +191,7 @@ export function ToysAdmin({ onChange, startNew, onStarted }: { onChange: () => v
         title="Brinquedos"
         subtitle={`Portfólio do site. A estrela escolhe os ${HOME_FEATURED_SLOTS} que aparecem na página inicial (${featuredCount}/${HOME_FEATURED_SLOTS}).`}
         action={
-          <button onClick={openNew} className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl transition-colors">
+          <button onClick={openNew} className={btn.primary}>
             <Plus className="h-5 w-5" /> Novo brinquedo
           </button>
         }
@@ -201,49 +201,46 @@ export function ToysAdmin({ onChange, startNew, onStarted }: { onChange: () => v
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar por nome, descrição ou conceito" className={`${inputCls} pl-9`} />
       </div>
 
-      {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-orange-500" /></div>
-      ) : shown.length === 0 ? (
-        <p className="text-gray-500 text-center py-16">{q ? "Nenhum brinquedo encontrado." : "Nenhum brinquedo publicado ainda."}</p>
-      ) : shown.map(toy => (
-        <div key={toy.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3 flex gap-4 items-center">
-          <img src={toy.image} alt={toy.title} className="w-20 h-20 object-cover rounded-xl shrink-0 bg-gray-100" />
-          <div className="flex-1 min-w-0">
-            <h3 className="text-base font-bold truncate">{toy.title}</h3>
-            <p className="text-sm text-gray-500 line-clamp-1">{toy.description}</p>
-            <div className="flex flex-wrap gap-1.5 mt-1">
-              {toy.featured && <span className="text-[11px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">Destaque na home</span>}
-              {!toy.guide_url && <span className="text-[11px] font-bold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">Sem guia em PDF</span>}
+      {loading ? <Loading /> : shown.length === 0 ? (
+        <EmptyState>{q ? "Nenhum brinquedo encontrado." : "Nenhum brinquedo publicado ainda."}</EmptyState>
+      ) : (
+        <div className="space-y-3">
+          {shown.map(toy => (
+            <div key={toy.id} className={`${cardCls} p-3 sm:p-4 flex gap-4 items-center`}>
+              <img src={toy.image} alt="" className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-xl shrink-0 bg-gray-100" />
+              <OpenButton onClick={() => openEdit(toy)} label={`Editar ${toy.title}`} className="flex-1 min-w-0">
+                <span className="text-base font-bold leading-snug line-clamp-2 sm:line-clamp-1">{toy.title}</span>
+                <span className="text-sm text-gray-500 line-clamp-1">{toy.description}</span>
+                <span className="flex flex-wrap gap-1.5 mt-1.5">
+                  {toy.featured && <span className="text-[11px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">Destaque na página inicial</span>}
+                  {!toy.guide_url && <span className="text-[11px] font-bold bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Sem guia em PDF</span>}
+                </span>
+              </OpenButton>
+              <button onClick={() => toggleFeatured(toy)} disabled={busyId === toy.id} aria-pressed={!!toy.featured}
+                className={`relative z-10 p-2.5 rounded-xl transition-colors shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500 ${toy.featured ? "bg-amber-100 text-amber-500 hover:bg-amber-200" : "text-gray-300 hover:text-amber-400 hover:bg-amber-50"}`}
+                title={toy.featured ? "Tirar da página inicial" : "Destacar na página inicial"} aria-label={toy.featured ? "Tirar da página inicial" : "Destacar na página inicial"}>
+                {busyId === toy.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Star className="h-5 w-5" fill={toy.featured ? "currentColor" : "none"} />}
+              </button>
+              <ItemMenu items={[
+                { label: "Editar", icon: Pencil, onSelect: () => openEdit(toy) },
+                { label: "Ver no site", icon: ExternalLink, onSelect: () => window.open(`/portfolio/${toy.id}`, "_blank", "noopener") },
+                { label: "Excluir", icon: Trash2, danger: true, onSelect: () => remove(toy) },
+              ]} />
             </div>
-          </div>
-          <button onClick={() => toggleFeatured(toy)} disabled={busyId === toy.id}
-            className={`p-3 rounded-xl transition-colors shrink-0 ${toy.featured ? "bg-amber-100 text-amber-500 hover:bg-amber-200" : "bg-gray-100 text-gray-300 hover:text-amber-400"}`}
-            title={toy.featured ? "Tirar da página inicial" : "Destacar na página inicial"}>
-            <Star className="h-5 w-5" fill={toy.featured ? "currentColor" : "none"} />
-          </button>
-          <a href={`/portfolio/${toy.id}`} target="_blank" rel="noopener noreferrer" className="p-3 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors shrink-0 hidden sm:block" title="Ver no site">
-            <ExternalLink className="h-5 w-5" />
-          </a>
-          <button onClick={() => openEdit(toy)} className="p-3 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors shrink-0" title="Editar">
-            <Pencil className="h-5 w-5" />
-          </button>
-          <button onClick={() => remove(toy)} disabled={busyId === toy.id} className="p-3 rounded-xl bg-red-100 hover:bg-red-200 disabled:opacity-60 text-red-600 transition-colors shrink-0" title="Excluir">
-            {busyId === toy.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Trash2 className="h-5 w-5" />}
-          </button>
+          ))}
         </div>
-      ))}
+      )}
 
       {modal && (
         <Modal
           wide
           title={modal === "new" ? "Novo brinquedo" : "Editar brinquedo"}
           onClose={close}
-          footer={<>
-            <button onClick={close} disabled={!!uploading} className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-60 text-gray-700 font-bold py-3 rounded-xl transition-colors">Cancelar</button>
-            <button onClick={save} disabled={saving || !!uploading} className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
-              {saving && <Loader2 className="h-5 w-5 animate-spin" />} {modal === "new" ? "Publicar" : "Salvar"}
-            </button>
-          </>}
+          onSave={save}
+          saving={saving}
+          busy={!!uploading}
+          dirty={JSON.stringify(form) !== JSON.stringify(original)}
+          saveLabel={modal === "new" ? "Publicar" : "Salvar"}
         >
           <Field label="Nome do brinquedo">
             <input value={form.title} onChange={e => set("title", e.target.value)} className={inputCls} />
@@ -258,12 +255,12 @@ export function ToysAdmin({ onChange, startNew, onStarted }: { onChange: () => v
                   : form.image ? <img src={form.image} alt="" className="w-full h-full object-contain" />
                   : <span className="flex flex-col items-center text-gray-400 text-sm font-bold"><ImagePlus className="h-6 w-6 mb-1" /> Enviar imagem</span>}
               </button>
-              {form.image && <p className="text-xs text-gray-400 mt-1">Clique na imagem para trocar.</p>}
+              {form.image && <p className="text-xs text-gray-500 mt-1">Clique na imagem para trocar.</p>}
               <input ref={imageInput} type="file" accept="image/*" hidden onChange={e => { uploadImage(e.target.files?.[0]); e.target.value = ""; }} />
             </div>
             <div className="space-y-4">
               <div>
-                <p className="text-sm font-bold text-gray-700 mb-1">Guia de construção <span className="font-normal text-gray-400">(PDF)</span></p>
+                <p className="text-sm font-bold text-gray-700 mb-1">Guia de construção <span className="font-normal text-gray-500">(PDF)</span></p>
                 {form.guide_url ? (
                   <div className="flex flex-wrap items-center gap-3">
                     <a href={form.guide_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 hover:underline">

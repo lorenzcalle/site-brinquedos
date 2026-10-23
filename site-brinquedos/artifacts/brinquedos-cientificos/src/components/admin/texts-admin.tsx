@@ -5,12 +5,13 @@ import { SITE_TEXT_PAGES, type SiteTextDef, loadSiteTexts } from "@/lib/site-tex
 import { fitToJpeg } from "@/lib/image";
 import { removeSiteMedia, uploadSiteMedia } from "@/lib/media";
 import { Loader2, ExternalLink, RotateCcw, ImagePlus } from "lucide-react";
-import { SectionHeader, inputCls } from "./ui";
+import { Loading, PillTabs, SectionHeader, btn, inputCls, useConfirm } from "./ui";
 
 // Textos das páginas (tabela site_texts). Cada página do site é uma aba; os campos vêm
 // do catálogo em src/lib/site-texts.tsx, com o texto original como padrão.
 export function TextsAdmin() {
   const { toast } = useToast();
+  const [confirm, confirmDialog] = useConfirm();
   const [pageIdx, setPageIdx] = useState(0);
   const [saved, setSaved] = useState<Record<string, string>>({});
   const [draft, setDraft] = useState<Record<string, string>>({});
@@ -36,13 +37,22 @@ export function TextsAdmin() {
   const dirtyKeys = SITE_TEXT_PAGES.flatMap(p => p.texts).filter(isDirty);
   const set = (key: string, v: string) => setDraft(prev => ({ ...prev, [key]: v }));
 
-  const switchPage = (i: number) => {
+  // Sair da aba (ou do site) com mudança não salva: pergunta antes.
+  const switchPage = async (i: number) => {
+    if (i === pageIdx) return;
     if (dirtyKeys.some(d => page.texts.includes(d))) {
-      toast({ title: "Salve ou descarte as mudanças desta página antes de trocar", variant: "destructive" });
-      return;
+      if (!(await confirm("Descartar as mudanças desta página?", "Você alterou textos que ainda não foram salvos.", "Descartar"))) return;
+      await discard();
     }
     setPageIdx(i);
   };
+
+  useEffect(() => {
+    if (!dirtyKeys.length) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [dirtyKeys.length]);
 
   const uploadImage = async (key: string, file: File | undefined) => {
     if (!file) return;
@@ -88,7 +98,7 @@ export function TextsAdmin() {
     load();
   };
 
-  if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-orange-500" /></div>;
+  if (loading) return <Loading />;
 
   const pageDirty = page.texts.filter(isDirty).length;
 
@@ -98,33 +108,27 @@ export function TextsAdmin() {
         title="Textos do site"
         subtitle="Os textos fixos de cada página. “Restaurar original” volta ao texto de quando o site foi feito."
         action={
-          <a href={page.path} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2.5 rounded-xl transition-colors">
+          <a href={page.path} target="_blank" rel="noopener noreferrer" className={btn.secondary}>
             <ExternalLink className="h-4 w-4" /> Ver {page.page}
           </a>
         }
       />
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {SITE_TEXT_PAGES.map((p, i) => (
-          <button key={p.page} onClick={() => switchPage(i)}
-            className={`px-4 py-2 rounded-xl font-bold text-sm transition-colors ${i === pageIdx ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}>
-            {p.page}
-          </button>
-        ))}
-      </div>
+      <PillTabs<number> label="Páginas do site" value={pageIdx} onChange={switchPage}
+        items={SITE_TEXT_PAGES.map((p, i) => ({ key: i, label: p.page }))} />
 
       <div className="space-y-5">
         {page.texts.map(d => {
           const v = value(d);
           const custom = v !== d.default;
           return (
-            <div key={d.key} className={`bg-white rounded-2xl border shadow-sm p-5 ${isDirty(d) ? "border-orange-300" : "border-gray-100"}`}>
+            <div key={d.key} className={`bg-white rounded-2xl border shadow-sm p-5 ${isDirty(d) ? "border-orange-300 ring-2 ring-orange-100" : "border-gray-200/80"}`}>
               <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
-                <label className="text-sm font-bold text-gray-700">
+                <label htmlFor={`txt-${d.key}`} className="text-sm font-bold text-gray-700">
                   {d.label}
-                  {isDirty(d) && <span className="ml-2 text-xs font-bold text-orange-600">não salvo</span>}
+                  {isDirty(d) && <span className="ml-2 text-[11px] font-bold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">não salvo</span>}
                 </label>
                 {custom && (
-                  <button onClick={() => set(d.key, d.default)} className="inline-flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-gray-800">
+                  <button onClick={() => set(d.key, d.default)} className="inline-flex items-center gap-1 text-xs font-bold text-gray-500 hover:text-gray-800 rounded px-1">
                     <RotateCcw className="h-3.5 w-3.5" /> Restaurar original
                   </button>
                 )}
@@ -132,17 +136,17 @@ export function TextsAdmin() {
               {d.kind === "image" ? (
                 <div className="flex flex-wrap items-center gap-4">
                   <img src={v} alt="" className="max-h-32 rounded-lg border" />
-                  <label className="inline-flex items-center gap-2 text-sm font-bold bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg cursor-pointer">
+                  <label className={`${btn.subtle} cursor-pointer focus-within:ring-2 focus-within:ring-orange-500`}>
                     {uploading === d.key ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />} Trocar imagem
                     <input type="file" accept="image/*" hidden onChange={e => { uploadImage(d.key, e.target.files?.[0]); e.target.value = ""; }} />
                   </label>
                 </div>
               ) : d.kind === "text" ? (
-                <textarea value={v} onChange={e => set(d.key, e.target.value)} rows={Math.min(10, Math.max(3, Math.ceil(v.length / 90) + v.split("\n").length))} className={`${inputCls} resize-y`} />
+                <textarea id={`txt-${d.key}`} value={v} onChange={e => set(d.key, e.target.value)} rows={Math.min(10, Math.max(3, Math.ceil(v.length / 90) + v.split("\n").length))} className={`${inputCls} resize-y`} />
               ) : (
-                <input value={v} onChange={e => set(d.key, e.target.value)} className={inputCls} />
+                <input id={`txt-${d.key}`} value={v} onChange={e => set(d.key, e.target.value)} className={inputCls} />
               )}
-              {d.help && <p className="text-xs text-gray-400 mt-1.5">{d.help}</p>}
+              {d.help && <p className="text-xs text-gray-500 mt-1.5">{d.help}</p>}
             </div>
           );
         })}
@@ -150,14 +154,15 @@ export function TextsAdmin() {
 
       {/* Barra de salvar fixa enquanto houver mudança */}
       {pageDirty > 0 && (
-        <div className="sticky bottom-4 mt-6 bg-white border border-orange-200 shadow-lg rounded-2xl p-4 flex flex-wrap items-center gap-3">
-          <span className="flex-1 text-sm font-bold text-gray-700">{pageDirty} campo(s) alterado(s)</span>
-          <button onClick={discard} disabled={saving} className="px-4 py-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 font-bold text-gray-700">Descartar</button>
-          <button onClick={save} disabled={saving || !!uploading} className="px-6 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white font-bold inline-flex items-center gap-2">
+        <div className="sticky bottom-4 mt-6 bg-white border border-orange-200 shadow-xl rounded-2xl p-4 flex flex-wrap items-center gap-3">
+          <span className="flex-1 text-sm font-bold text-gray-700">{pageDirty} campo(s) alterado(s) ainda não salvo(s)</span>
+          <button onClick={discard} disabled={saving} className={btn.secondary}>Descartar</button>
+          <button onClick={save} disabled={saving || !!uploading} className={btn.primary}>
             {saving && <Loader2 className="h-4 w-4 animate-spin" />} Salvar
           </button>
         </div>
       )}
+      {confirmDialog}
     </>
   );
 }

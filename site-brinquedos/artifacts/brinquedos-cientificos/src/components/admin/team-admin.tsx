@@ -5,7 +5,7 @@ import { type TeamGroup, type TeamMember, fetchTeam, initials } from "@/lib/team
 import { cropToJpeg } from "@/lib/image";
 import { removeSiteMedia, uploadSiteMedia } from "@/lib/media";
 import { Trash2, Loader2, Pencil, Plus, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ImagePlus, ExternalLink } from "lucide-react";
-import { Field, Modal, SectionHeader, inputCls, useConfirm } from "./ui";
+import { EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, btn, cardCls, inputCls, useConfirm } from "./ui";
 
 type MemberForm = { group_id: string; name: string; role: string; bio: string; photo_url: string | null };
 type GroupForm = { title: string; subtitle: string };
@@ -23,6 +23,7 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
   const [memberModal, setMemberModal] = useState<null | string>(null);
   const [mForm, setMForm] = useState<MemberForm>({ group_id: "", name: "", role: "", bio: "", photo_url: null });
   const [mOriginalPhoto, setMOriginalPhoto] = useState<string | null>(null);
+  const [mOriginal, setMOriginal] = useState<MemberForm | null>(null);
   const [uploading, setUploading] = useState(false);
   const uploadedNow = useRef<string[]>([]);
   const photoInput = useRef<HTMLInputElement>(null);
@@ -30,6 +31,7 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
   // Modal de grupo: id do grupo, ou "new"
   const [groupModal, setGroupModal] = useState<null | string>(null);
   const [gForm, setGForm] = useState<GroupForm>({ title: "", subtitle: "" });
+  const [gOriginal, setGOriginal] = useState<GroupForm>({ title: "", subtitle: "" });
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
@@ -50,14 +52,18 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
 
   // ─── Pessoas ───────────────────────────────────────────────────────────────
   const openNewMember = (groupId: string) => {
-    setMForm({ group_id: groupId, name: "", role: "", bio: "", photo_url: null });
+    const f = { group_id: groupId, name: "", role: "", bio: "", photo_url: null };
+    setMForm(f);
+    setMOriginal(f);
     setMOriginalPhoto(null);
     uploadedNow.current = [];
     setMemberModal("new");
   };
 
   const openEditMember = (m: TeamMember) => {
-    setMForm({ group_id: m.group_id, name: m.name, role: m.role ?? "", bio: m.bio ?? "", photo_url: m.photo_url ?? null });
+    const f = { group_id: m.group_id, name: m.name, role: m.role ?? "", bio: m.bio ?? "", photo_url: m.photo_url ?? null };
+    setMForm(f);
+    setMOriginal(f);
     setMOriginalPhoto(m.photo_url ?? null);
     uploadedNow.current = [];
     setMemberModal(m.id);
@@ -139,7 +145,9 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
 
   // ─── Grupos ────────────────────────────────────────────────────────────────
   const openGroup = (g?: TeamGroup) => {
-    setGForm({ title: g?.title ?? "", subtitle: g?.subtitle ?? "" });
+    const f = { title: g?.title ?? "", subtitle: g?.subtitle ?? "" };
+    setGForm(f);
+    setGOriginal(f);
     setGroupModal(g?.id ?? "new");
   };
 
@@ -164,79 +172,82 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
     changed();
   };
 
-  if (loading) return <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-orange-500" /></div>;
-
-  const iconBtn = "p-1.5 rounded-lg bg-white/90 hover:bg-white text-gray-700 shadow-sm disabled:opacity-40";
+  if (loading) return <Loading />;
 
   return (
     <>
       <SectionHeader
         title="Equipe"
-        subtitle="Página Equipe e o carrossel de O Projeto. A ordem aqui é a ordem do site."
+        subtitle="Página Equipe e o carrossel de O Projeto. A ordem aqui é a ordem do site. Clique numa pessoa para editar."
         action={
-          <div className="flex gap-2">
-            <a href="/equipe" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold px-4 py-2.5 rounded-xl transition-colors">
+          <div className="flex flex-wrap gap-2">
+            <a href="/equipe" target="_blank" rel="noopener noreferrer" className={btn.secondary}>
               <ExternalLink className="h-4 w-4" /> Ver página
             </a>
-            <button onClick={() => openGroup()} className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl transition-colors">
+            <button onClick={() => openGroup()} className={btn.primary}>
               <Plus className="h-5 w-5" /> Novo grupo
             </button>
           </div>
         }
       />
 
-      {groups.length === 0 && <p className="text-gray-500 text-center py-16">Nenhum grupo ainda. Comece criando um (ex.: “Coordenação”).</p>}
+      {groups.length === 0 && <EmptyState>Nenhum grupo ainda. Comece criando um (ex.: “Coordenação”).</EmptyState>}
 
-      {groups.map((g, gi) => (
-        <div key={g.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 mb-5">
-          <div className="flex flex-wrap items-start gap-3 mb-4">
-            <div className="flex-1 min-w-0">
-              <h3 className="text-lg font-black">{g.title}</h3>
-              {g.subtitle && <p className="text-sm text-gray-500">{g.subtitle}</p>}
-              {g.members.length === 0 && <p className="text-xs text-amber-700 mt-1">Grupo vazio — não aparece no site.</p>}
-            </div>
-            <div className="flex gap-1">
-              <button onClick={() => swap("team_groups", g, groups[gi - 1])} disabled={gi === 0 || busy} className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-40" title="Subir grupo"><ArrowUp className="h-4 w-4" /></button>
-              <button onClick={() => swap("team_groups", g, groups[gi + 1])} disabled={gi === groups.length - 1 || busy} className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-40" title="Descer grupo"><ArrowDown className="h-4 w-4" /></button>
-              <button onClick={() => openGroup(g)} className="p-2 rounded-lg bg-blue-100 hover:bg-blue-200 text-blue-600" title="Editar grupo"><Pencil className="h-4 w-4" /></button>
-              <button onClick={() => removeGroup(g)} className="p-2 rounded-lg bg-red-100 hover:bg-red-200 text-red-600" title="Excluir grupo"><Trash2 className="h-4 w-4" /></button>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
-            {g.members.map((m, mi) => (
-              <div key={m.id} className="relative group rounded-xl border border-gray-100 p-3 text-center hover:border-orange-200 transition-colors">
-                <div className="mx-auto mb-2 w-20 h-20 rounded-full overflow-hidden bg-orange-50 flex items-center justify-center">
-                  {m.photo_url ? <img src={m.photo_url} alt="" className="w-full h-full object-cover" /> : <span className="text-xl font-black text-orange-400">{initials(m.name)}</span>}
-                </div>
-                <p className="text-sm font-bold leading-tight">{m.name}</p>
-                {m.role && <p className="text-xs text-orange-600 font-semibold">{m.role}</p>}
-                <div className="absolute inset-x-0 top-2 flex justify-center gap-1 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
-                  <button onClick={() => swap("team_members", m, g.members[mi - 1])} disabled={mi === 0 || busy} className={iconBtn} title="Mover para antes"><ArrowLeft className="h-4 w-4" /></button>
-                  <button onClick={() => openEditMember(m)} className={`${iconBtn} text-blue-600`} title="Editar"><Pencil className="h-4 w-4" /></button>
-                  <button onClick={() => removeMember(m)} disabled={busy} className={`${iconBtn} text-red-600`} title="Remover"><Trash2 className="h-4 w-4" /></button>
-                  <button onClick={() => swap("team_members", m, g.members[mi + 1])} disabled={mi === g.members.length - 1 || busy} className={iconBtn} title="Mover para depois"><ArrowRight className="h-4 w-4" /></button>
-                </div>
+      <div className="space-y-5">
+        {groups.map((g, gi) => (
+          <section key={g.id} className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-4 sm:p-5">
+            <div className="flex items-start gap-3 mb-4">
+              <div className="flex-1 min-w-0">
+                <h2 className="text-lg font-black">{g.title}</h2>
+                {g.subtitle && <p className="text-sm text-gray-500">{g.subtitle}</p>}
+                {g.members.length === 0 && <p className="text-xs font-semibold text-amber-700 mt-1">Grupo vazio — não aparece no site.</p>}
               </div>
-            ))}
-            <button onClick={() => openNewMember(g.id)} className="rounded-xl border-2 border-dashed border-gray-200 hover:border-orange-400 text-gray-400 hover:text-orange-500 flex flex-col items-center justify-center gap-1 py-6 text-sm font-bold transition-colors">
-              <Plus className="h-5 w-5" /> Adicionar pessoa
-            </button>
-          </div>
-        </div>
-      ))}
-      <p className="text-xs text-gray-400">No celular, toque na pessoa para ver os botões de editar e mover.</p>
+              <ItemMenu label={`Ações do grupo ${g.title}`} items={[
+                { label: "Editar grupo", icon: Pencil, onSelect: () => openGroup(g) },
+                { label: "Adicionar pessoa", icon: Plus, onSelect: () => openNewMember(g.id) },
+                { label: "Subir grupo", icon: ArrowUp, hidden: gi === 0, onSelect: () => swap("team_groups", g, groups[gi - 1]) },
+                { label: "Descer grupo", icon: ArrowDown, hidden: gi === groups.length - 1, onSelect: () => swap("team_groups", g, groups[gi + 1]) },
+                { label: "Excluir grupo", icon: Trash2, danger: true, onSelect: () => removeGroup(g) },
+              ]} />
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+              {g.members.map((m, mi) => (
+                <div key={m.id} className={`${cardCls} !shadow-none p-3 pt-4 text-center`}>
+                  <div className="absolute top-1 right-1">
+                    <ItemMenu label={`Ações de ${m.name}`} items={[
+                      { label: "Editar", icon: Pencil, onSelect: () => openEditMember(m) },
+                      { label: "Mover para antes", icon: ArrowLeft, hidden: mi === 0, onSelect: () => swap("team_members", m, g.members[mi - 1]) },
+                      { label: "Mover para depois", icon: ArrowRight, hidden: mi === g.members.length - 1, onSelect: () => swap("team_members", m, g.members[mi + 1]) },
+                      { label: "Remover da equipe", icon: Trash2, danger: true, onSelect: () => removeMember(m) },
+                    ]} />
+                  </div>
+                  <div className="mx-auto mb-2 w-20 h-20 rounded-full overflow-hidden bg-orange-50 flex items-center justify-center">
+                    {m.photo_url ? <img src={m.photo_url} alt="" className="w-full h-full object-cover" /> : <span className="text-xl font-black text-orange-400">{initials(m.name)}</span>}
+                  </div>
+                  <OpenButton onClick={() => openEditMember(m)} label={`Editar ${m.name}`} className="w-full !text-center">
+                    <span className="block text-sm font-bold leading-tight">{m.name}</span>
+                    {m.role && <span className="block text-xs text-orange-700 font-semibold mt-0.5">{m.role}</span>}
+                  </OpenButton>
+                </div>
+              ))}
+              <button onClick={() => openNewMember(g.id)} className="rounded-2xl border-2 border-dashed border-gray-200 hover:border-orange-400 text-gray-500 hover:text-orange-600 flex flex-col items-center justify-center gap-1 py-6 text-sm font-bold transition-colors min-h-[9rem] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500">
+                <Plus className="h-5 w-5" /> Adicionar pessoa
+              </button>
+            </div>
+          </section>
+        ))}
+      </div>
+      {busy && <p className="mt-3 text-sm text-orange-600 inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Salvando a nova ordem…</p>}
 
       {memberModal && (
         <Modal
           title={memberModal === "new" ? "Adicionar pessoa" : "Editar pessoa"}
           onClose={closeMember}
-          footer={<>
-            <button onClick={closeMember} disabled={uploading} className="flex-1 bg-gray-100 hover:bg-gray-200 disabled:opacity-60 text-gray-700 font-bold py-3 rounded-xl transition-colors">Cancelar</button>
-            <button onClick={saveMember} disabled={saving || uploading} className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
-              {saving && <Loader2 className="h-5 w-5 animate-spin" />} Salvar
-            </button>
-          </>}
+          onSave={saveMember}
+          saving={saving}
+          busy={uploading}
+          dirty={JSON.stringify(mForm) !== JSON.stringify(mOriginal)}
         >
           <div className="flex items-center gap-4">
             <button type="button" onClick={() => photoInput.current?.click()} disabled={uploading}
@@ -273,12 +284,9 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
         <Modal
           title={groupModal === "new" ? "Novo grupo" : "Editar grupo"}
           onClose={() => setGroupModal(null)}
-          footer={<>
-            <button onClick={() => setGroupModal(null)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-colors">Cancelar</button>
-            <button onClick={saveGroup} disabled={saving} className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
-              {saving && <Loader2 className="h-5 w-5 animate-spin" />} Salvar
-            </button>
-          </>}
+          onSave={saveGroup}
+          saving={saving}
+          dirty={JSON.stringify(gForm) !== JSON.stringify(gOriginal)}
         >
           <Field label="Nome do grupo">
             <input value={gForm.title} onChange={e => setGForm({ ...gForm, title: e.target.value })} placeholder="Ex: Acadêmicos Bolsistas" className={inputCls} />

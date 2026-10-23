@@ -80,16 +80,16 @@ export function PublishButton() {
   else line = "Ainda não publicado pelo painel";
 
   return (
-    <div className="flex flex-col items-end gap-1">
+    <div className="flex items-center gap-3">
+      <span className="hidden md:inline text-xs text-gray-500">{line}</span>
       <button
         onClick={publish}
         disabled={busy || requesting || !loaded}
         title="As mudanças já aparecem para quem visita o site. Publicar atualiza a versão que o Google e as prévias de link (WhatsApp) leem, e cria a página de brinquedos novos para o Google."
-        className="inline-flex items-center gap-2 bg-white text-orange-600 hover:bg-orange-50 disabled:opacity-70 px-4 py-2 rounded-xl font-bold text-sm transition-colors shadow-sm"
+        className="inline-flex items-center gap-2 bg-white border-2 border-gray-200 hover:border-orange-300 hover:bg-orange-50 disabled:opacity-70 text-gray-800 px-4 py-2 rounded-xl font-bold text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange-500"
       >
-        {busy || requesting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Rocket className="h-4 w-4" />} Publicar
+        {busy || requesting ? <Loader2 className="h-4 w-4 animate-spin text-orange-500" /> : <Rocket className="h-4 w-4 text-orange-500" />} {busy ? "Publicando…" : "Publicar"}
       </button>
-      <span className="text-[11px] text-white/85">{line}</span>
     </div>
   );
 }

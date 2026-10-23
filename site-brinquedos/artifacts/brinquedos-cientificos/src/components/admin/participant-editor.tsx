@@ -65,7 +65,7 @@ export function ParticipantEditor({ eventId, value, onChange, onUploaded, onBusy
         </div>
       </div>
       <div>
-        <label className="block text-xs font-bold text-gray-600 mb-1">Texto de apresentação <span className="font-normal text-gray-400">(**negrito**)</span></label>
+        <label className="block text-xs font-bold text-gray-600 mb-1">Texto de apresentação <span className="font-normal text-gray-500">(**negrito**)</span></label>
         <textarea value={value.intro ?? ""} onChange={e => onChange({ ...value, intro: e.target.value })} rows={2} className={`${small} resize-y`} />
       </div>
 

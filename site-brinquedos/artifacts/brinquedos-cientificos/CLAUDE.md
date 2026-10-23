@@ -47,8 +47,11 @@ VITE_SUPABASE_ANON_KEY=<chave publishable>
   Operações privilegiadas só funcionam logado (papel `authenticated` no RLS).
   Painel em seções (`/admin#brinquedos` etc.): `src/pages/admin.tsx` só tem login, menu e
   contagens; cada seção é um componente em `src/components/admin/` (Início, Brinquedos,
-  Submissões, Vídeos, Eventos) que carrega os próprios dados. Peças comuns (Modal, Field,
-  `useConfirm` no lugar do `confirm()`) em `components/admin/ui.tsx`. Imagens são
+  Submissões, Vídeos, Eventos) que carrega os próprios dados. O painel tem layout próprio
+  (menu lateral; no celular, ☰), sem o `Layout` do site. Peças comuns em
+  `components/admin/ui.tsx`: `Modal` (Radix; pergunta antes de descartar se `dirty`),
+  `cardCls` + `OpenButton` (card inteiro clicável), `ItemMenu` (menu ⋯), `btn.*`, `Field`
+  (liga rótulo ao campo), `PillTabs`, `useConfirm` no lugar do `confirm()`. Imagens são
   redimensionadas no navegador antes do upload (`src/lib/image.ts`).
 - **Textos editáveis**: `src/lib/site-texts.tsx` é o catálogo (chave, rótulo, texto padrão)
   que monta o formulário de /admin → Textos; a página usa `const t = useSiteTexts()` e

@@ -3,8 +3,8 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import { videoThumb, isVideoUrl } from "@/lib/utils";
 import { VIDEO_CATEGORIES, VIDEO_LEVELS } from "@/lib/data";
-import { Trash2, Loader2, Pencil, Plus, Video, Search } from "lucide-react";
-import { Field, Modal, SectionHeader, inputCls, useConfirm } from "./ui";
+import { Trash2, Pencil, Plus, Video, Search, ExternalLink } from "lucide-react";
+import { EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, btn, cardCls, inputCls, useConfirm } from "./ui";
 
 type Material = {
   id: string;
@@ -27,6 +27,7 @@ export function VideosAdmin({ onChange, startNew, onStarted }: { onChange: () =>
   const [query, setQuery] = useState("");
   const [modal, setModal] = useState<null | "new" | string>(null); // "new" ou id
   const [form, setForm] = useState(emptyForm);
+  const [original, setOriginal] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
@@ -40,16 +41,18 @@ export function VideosAdmin({ onChange, startNew, onStarted }: { onChange: () =>
     if (startNew) { openNew(); onStarted?.(); }
   }, [startNew]);
 
-  const openNew = () => { setForm(emptyForm); setModal("new"); };
+  const openNew = () => { setForm(emptyForm); setOriginal(emptyForm); setModal("new"); };
 
   const openEdit = (mat: Material) => {
-    setForm({
+    const f = {
       title: mat.title,
       description: mat.description ?? "",
       category: mat.category ?? VIDEO_CATEGORIES[0],
       level: mat.level ?? VIDEO_LEVELS[0],
       video_url: mat.video_url,
-    });
+    };
+    setForm(f);
+    setOriginal(f);
     setModal(mat.id);
   };
 
@@ -107,7 +110,7 @@ export function VideosAdmin({ onChange, startNew, onStarted }: { onChange: () =>
         title="Vídeos"
         subtitle="Tutoriais da página Materiais. O vídeo fica no YouTube ou no Drive; aqui vai só o link."
         action={
-          <button onClick={openNew} className="inline-flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-2.5 rounded-xl transition-colors">
+          <button onClick={openNew} className={btn.primary}>
             <Plus className="h-5 w-5" /> Novo vídeo
           </button>
         }
@@ -116,41 +119,39 @@ export function VideosAdmin({ onChange, startNew, onStarted }: { onChange: () =>
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
         <input value={query} onChange={e => setQuery(e.target.value)} placeholder="Buscar por título, categoria ou nível" className={`${inputCls} pl-9`} />
       </div>
-      {loading ? (
-        <div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-orange-500" /></div>
-      ) : shown.length === 0 ? (
-        <p className="text-gray-500 text-center py-16">{q ? "Nenhum vídeo encontrado." : "Nenhum vídeo cadastrado ainda."}</p>
-      ) : shown.map(mat => {
-        const thumb = videoThumb(mat.video_url);
-        return (
-          <div key={mat.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-3 flex gap-4 items-center">
-            <div className="w-28 h-16 rounded-lg overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
-              {thumb ? <img src={thumb} alt={mat.title} className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = "none"; }} /> : <Video className="h-6 w-6 text-gray-400" />}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="text-base font-bold truncate">{mat.title}</h3>
-              <p className="text-xs text-gray-400 truncate">{[mat.category, mat.level].filter(Boolean).join(" · ")}</p>
-            </div>
-            <button onClick={() => openEdit(mat)} className="p-3 rounded-xl bg-blue-100 hover:bg-blue-200 text-blue-600 transition-colors shrink-0" title="Editar">
-              <Pencil className="h-5 w-5" />
-            </button>
-            <button onClick={() => remove(mat)} disabled={busyId === mat.id} className="p-3 rounded-xl bg-red-100 hover:bg-red-200 disabled:opacity-60 text-red-600 transition-colors shrink-0" title="Excluir">
-              {busyId === mat.id ? <Loader2 className="h-5 w-5 animate-spin" /> : <Trash2 className="h-5 w-5" />}
-            </button>
-          </div>
-        );
-      })}
+      {loading ? <Loading /> : shown.length === 0 ? (
+        <EmptyState>{q ? "Nenhum vídeo encontrado." : "Nenhum vídeo cadastrado ainda."}</EmptyState>
+      ) : (
+        <div className="space-y-3">
+          {shown.map(mat => {
+            const thumb = videoThumb(mat.video_url);
+            return (
+              <div key={mat.id} className={`${cardCls} p-3 sm:p-4 flex gap-4 items-center`}>
+                <div className="w-20 sm:w-28 aspect-video rounded-lg overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
+                  {thumb ? <img src={thumb} alt="" className="w-full h-full object-cover" onError={e => { e.currentTarget.style.display = "none"; }} /> : <Video className="h-6 w-6 text-gray-400" />}
+                </div>
+                <OpenButton onClick={() => openEdit(mat)} label={`Editar ${mat.title}`} className="flex-1 min-w-0">
+                  <span className="text-base font-bold leading-snug line-clamp-2 sm:line-clamp-1">{mat.title}</span>
+                  <span className="block text-sm text-gray-500 sm:truncate">{[mat.category, mat.level].filter(Boolean).join(" · ")}</span>
+                </OpenButton>
+                <ItemMenu items={[
+                  { label: "Editar", icon: Pencil, onSelect: () => openEdit(mat) },
+                  { label: "Abrir o vídeo", icon: ExternalLink, onSelect: () => window.open(mat.video_url, "_blank", "noopener") },
+                  { label: busyId === mat.id ? "Excluindo…" : "Excluir", icon: Trash2, danger: true, onSelect: () => remove(mat) },
+                ]} />
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {modal && (
         <Modal
           title={modal === "new" ? "Novo vídeo" : "Editar vídeo"}
           onClose={() => setModal(null)}
-          footer={<>
-            <button onClick={() => setModal(null)} className="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 rounded-xl transition-colors">Cancelar</button>
-            <button onClick={save} disabled={saving} className="flex-1 bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white font-bold py-3 rounded-xl transition-colors flex items-center justify-center gap-2">
-              {saving && <Loader2 className="h-5 w-5 animate-spin" />} Salvar
-            </button>
-          </>}
+          onSave={save}
+          saving={saving}
+          dirty={JSON.stringify(form) !== JSON.stringify(original)}
         >
           <Field label="Título">
             <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Ex: Como montar o Carrinho Solar" className={inputCls} />
