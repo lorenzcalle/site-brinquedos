@@ -1,2 +1,4 @@
 *.mp4
 .claude/
+.ops-monitor/
+node_modules/
