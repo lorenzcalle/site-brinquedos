@@ -3,6 +3,7 @@ import { Atom, Menu, X, Globe, Instagram, Youtube, Phone, MessageCircle } from "
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoImg from "@/assets/images/logo-principal.png";
+import { useSiteTexts } from "@/lib/site-texts";
 
 const navLinks = [
   { name: "O Projeto", path: "/sobre" },
@@ -112,6 +113,12 @@ export function Navbar() {
 }
 
 export function Footer() {
+  const t = useSiteTexts();
+  const social = [
+    { href: t("redes.site_uri"), label: "Site da URI", icon: Globe },
+    { href: t("redes.instagram"), label: "Instagram", icon: Instagram },
+    { href: t("redes.youtube"), label: "YouTube", icon: Youtube },
+  ].filter(s => s.href.trim());
   return (
     <footer className="bg-foreground text-white pt-16 pb-8">
       <div className="container mx-auto px-4 md:px-6">
@@ -123,19 +130,13 @@ export function Footer() {
               </div>
               <img src={logoImg} alt="Brinquedos Científicos" className="h-11 w-auto" />
             </Link>
-            <p className="text-gray-400 mb-6">
-              Aprender ciência brincando e criando! Um projeto dedicado à educação e inovação.
-            </p>
+            <p className="text-gray-400 mb-6 whitespace-pre-line">{t("rodape.frase")}</p>
             <div className="flex gap-4">
-              <a href="https://san.uri.br/sites/site_novo/" target="_blank" rel="noopener noreferrer" aria-label="Site da URI" className="bg-white/10 p-2 rounded-full hover:bg-primary transition-colors">
-                <Globe className="h-5 w-5" />
-              </a>
-              <a href="https://www.instagram.com/brinquecienciauri/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="bg-white/10 p-2 rounded-full hover:bg-primary transition-colors">
-                <Instagram className="h-5 w-5" />
-              </a>
-              <a href="#" className="bg-white/10 p-2 rounded-full hover:bg-primary transition-colors">
-                <Youtube className="h-5 w-5" />
-              </a>
+              {social.map(s => (
+                <a key={s.label} href={s.href} target="_blank" rel="noopener noreferrer" aria-label={s.label} className="bg-white/10 p-2 rounded-full hover:bg-primary transition-colors">
+                  <s.icon className="h-5 w-5" />
+                </a>
+              ))}
             </div>
           </div>
 
@@ -163,11 +164,11 @@ export function Footer() {
             <ul className="space-y-4 text-gray-300">
               <li className="flex items-start gap-3">
                 <Phone className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span>+55 (55) 3313-7900</span>
+                <span>{t("contato.telefone")}</span>
               </li>
               <li className="flex items-start gap-3">
                 <MessageCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                <span>bc@san.uri.br</span>
+                <span>{t("contato.email")}</span>
               </li>
             </ul>
           </div>
@@ -182,9 +183,12 @@ export function Footer() {
 }
 
 export function FloatingWhatsApp() {
+  const t = useSiteTexts();
+  const numero = t("contato.whatsapp").replace(/\D/g, "");
+  if (!numero) return null;
   return (
     <a
-      href="https://wa.me/555533137900"
+      href={`https://wa.me/${numero}`}
       target="_blank"
       rel="noopener noreferrer"
       className="fixed bottom-6 right-6 z-50 bg-green-500 text-white p-4 rounded-full shadow-lg hover:bg-green-600 hover:scale-110 transition-all duration-300 flex items-center justify-center"

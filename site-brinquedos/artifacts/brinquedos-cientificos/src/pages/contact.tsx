@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import emailjs from "@emailjs/browser";
+import { useSiteTexts } from "@/lib/site-texts";
 
 // ─── EmailJS – https://emailjs.com ───────────────────────────────
 const EMAILJS_SERVICE_ID  = "service_aetz69c";
@@ -25,6 +26,7 @@ type FormData = z.infer<typeof schema>;
 const inputClass = "w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-accent focus:border-transparent transition-all";
 
 export default function Contact() {
+  const t = useSiteTexts();
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: { subject: "Dúvida Geral" },
@@ -87,7 +89,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="font-bold text-lg">Telefone</h4>
-                  <p className="text-muted-foreground">+55 (55) 3313-7900</p>
+                  <p className="text-muted-foreground">{t("contato.telefone")}</p>
                 </div>
               </div>
 
@@ -97,7 +99,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="font-bold text-lg">E-mail</h4>
-                  <p className="text-muted-foreground">bc@san.uri.br</p>
+                  <p className="text-muted-foreground">{t("contato.email")}</p>
                 </div>
               </div>
 
@@ -107,7 +109,7 @@ export default function Contact() {
                 </div>
                 <div>
                   <h4 className="font-bold text-lg">Endereço</h4>
-                  <p className="text-muted-foreground">Av. Universidade das Missões, 464 — Universitário<br />Santo Ângelo – RS</p>
+                  <p className="text-muted-foreground whitespace-pre-line">{t("contato.endereco")}</p>
                 </div>
               </div>
 
@@ -177,7 +179,7 @@ export default function Contact() {
                   </div>
 
                   {sendError && (
-                    <p className="text-red-500 text-sm font-medium">Erro ao enviar. Tente novamente ou escreva diretamente para bc@san.uri.br.</p>
+                    <p className="text-red-500 text-sm font-medium">Erro ao enviar. Tente novamente ou escreva diretamente para {t("contato.email")}.</p>
                   )}
 
                   <button

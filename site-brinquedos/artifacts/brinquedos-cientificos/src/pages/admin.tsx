@@ -2,14 +2,16 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { Layout } from "@/components/layout";
-import { Loader2, LogOut, Home, Puzzle, Inbox, Video, CalendarDays } from "lucide-react";
+import { Loader2, LogOut, Home, Puzzle, Inbox, Video, CalendarDays, Users, Type } from "lucide-react";
 import { Dashboard } from "@/components/admin/dashboard";
 import { ToysAdmin } from "@/components/admin/toys-admin";
 import { SubmissionsAdmin } from "@/components/admin/submissions-admin";
 import { VideosAdmin } from "@/components/admin/videos-admin";
 import { EventsAdmin } from "@/components/admin/events-admin";
+import { TeamAdmin } from "@/components/admin/team-admin";
+import { TextsAdmin } from "@/components/admin/texts-admin";
 
-export type Section = "inicio" | "brinquedos" | "submissoes" | "videos" | "eventos";
+export type Section = "inicio" | "brinquedos" | "submissoes" | "videos" | "eventos" | "equipe" | "textos";
 
 const SECTIONS: { key: Section; label: string; icon: typeof Home }[] = [
   { key: "inicio", label: "Início", icon: Home },
@@ -17,6 +19,8 @@ const SECTIONS: { key: Section; label: string; icon: typeof Home }[] = [
   { key: "submissoes", label: "Submissões", icon: Inbox },
   { key: "videos", label: "Vídeos", icon: Video },
   { key: "eventos", label: "Eventos", icon: CalendarDays },
+  { key: "equipe", label: "Equipe", icon: Users },
+  { key: "textos", label: "Textos do site", icon: Type },
 ];
 
 // A seção fica no endereço (/admin#eventos): recarregar a página não volta para o início.
@@ -78,13 +82,14 @@ export default function Admin() {
 
   const loadCounts = async () => {
     const head = { count: "exact" as const, head: true };
-    const [t, s, v, e] = await Promise.all([
+    const [t, s, v, e, m] = await Promise.all([
       supabase.from("toys").select("id", head).eq("status", "approved"),
       supabase.from("submissions").select("id", head).eq("status", "pending"),
       supabase.from("materials").select("id", head),
       supabase.from("events").select("id", head),
+      supabase.from("team_members").select("id", head),
     ]);
-    setCounts({ brinquedos: t.count ?? 0, submissoes: s.count ?? 0, videos: v.count ?? 0, eventos: e.count ?? 0 });
+    setCounts({ brinquedos: t.count ?? 0, submissoes: s.count ?? 0, videos: v.count ?? 0, eventos: e.count ?? 0, equipe: m.count ?? 0 });
   };
 
   useEffect(() => { if (session) loadCounts(); }, [session]);
@@ -177,6 +182,8 @@ export default function Admin() {
           {section === "submissoes" && <SubmissionsAdmin onChange={loadCounts} />}
           {section === "videos" && <VideosAdmin {...sectionProps} />}
           {section === "eventos" && <EventsAdmin {...sectionProps} />}
+          {section === "equipe" && <TeamAdmin onChange={loadCounts} />}
+          {section === "textos" && <TextsAdmin />}
         </main>
       </div>
     </Layout>

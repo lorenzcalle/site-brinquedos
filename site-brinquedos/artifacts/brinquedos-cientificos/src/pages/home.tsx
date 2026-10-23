@@ -8,7 +8,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { cachifyImage, videoThumb } from "@/lib/utils";
 import { type Toy } from "@/lib/types";
-import bannerImg from "@/assets/images/banner-principal.jpg";
+import { useSiteTexts } from "@/lib/site-texts";
 
 const fadeIn = {
   hidden: { opacity: 0, y: 30 },
@@ -41,6 +41,7 @@ function ringOffset(i: number, current: number, n: number) {
 }
 
 export default function Home() {
+  const t = useSiteTexts();
   const [homeToys, setHomeToys] = useState<Toy[]>([]);
   const [missionToys, setMissionToys] = useState<Toy[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,7 +91,7 @@ export default function Home() {
       <section className="w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
         <div className="relative">
           <img
-            src={bannerImg}
+            src={t("inicio.banner")}
             alt="Banner Projeto Brinquedos Científicos"
             className="w-full h-auto block"
           />
@@ -114,7 +115,7 @@ export default function Home() {
               <Lightbulb className="h-12 w-12 mb-6 opacity-90" />
               <h3 className="text-2xl font-black mb-4">O que são Brinquedos Científicos?</h3>
               <p className="font-medium text-white/90 mb-6 leading-relaxed">
-                São projetos lúdicos que ensinam conceitos complexos de forma simples, tátil e divertida.
+                {t("inicio.card_conceito")}
               </p>
               <Link href="/sobre#o-que-sao" className="inline-flex items-center font-bold hover:underline">
                 Entenda o conceito <ArrowRight className="ml-2 h-4 w-4" />
@@ -131,7 +132,7 @@ export default function Home() {
               <BookOpen className="h-12 w-12 mb-6 opacity-90" />
               <h3 className="text-2xl font-black mb-4">Materiais de Apoio</h3>
               <p className="font-medium text-white/90 mb-6 leading-relaxed">
-                Baixe nossos manuais detalhados e planos de aula para usar em casa ou na sala de aula.
+                {t("inicio.card_materiais")}
               </p>
               <Link href="/materiais" className="inline-flex items-center font-bold hover:underline">
                 Acessar materiais <ArrowRight className="ml-2 h-4 w-4" />
@@ -148,7 +149,7 @@ export default function Home() {
               <Target className="h-12 w-12 mb-6 opacity-90" />
               <h3 className="text-2xl font-black mb-4">Mostra de Projetos</h3>
               <p className="font-medium text-white/90 mb-6 leading-relaxed">
-                Explore a galeria completa dos brinquedos que já desenvolvemos e inspire-se.
+                {t("inicio.card_mostra")}
               </p>
               <Link href="/portfolio" className="inline-flex items-center font-bold hover:underline">
                 Ver portfólio <ArrowRight className="ml-2 h-4 w-4" />
@@ -224,17 +225,10 @@ export default function Home() {
                 Transformando a <span className="text-primary">Educação Científica</span>
               </h2>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Acreditamos que a melhor forma de aprender é fazendo. Nosso projeto desenvolve brinquedos que as próprias crianças podem construir, transformando conceitos abstratos em experiências reais e empolgantes.
+                {t("inicio.missao_texto")}
               </p>
               <ul className="space-y-4 pt-4">
-                {[
-                  "Desenvolvimento do pensamento crítico",
-                  "Estímulo à criatividade e resolução de problemas",
-                  "Acessibilidade com materiais de baixo custo",
-                  "Aprendizado prático de eletrônica e robótica",
-                  "Inclusão e protagonismo feminino na tecnologia",
-                  "Integração entre teoria e experiências concretas",
-                ].map((item, i) => (
+                {t("inicio.missao_itens").split("\n").map(s => s.trim()).filter(Boolean).map((item, i) => (
                   <li key={i} className="flex items-center gap-3 text-lg font-medium text-foreground/80">
                     <div className="bg-accent/20 p-1.5 rounded-full text-accent">
                       <TestTube className="h-5 w-5" />
@@ -283,7 +277,7 @@ export default function Home() {
           <div className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black text-foreground mb-4">Galeria de Projetos</h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Conheça alguns dos nossos brinquedos científicos mais populares.
+              {t("inicio.galeria_sub")}
             </p>
           </div>
 
@@ -385,7 +379,7 @@ export default function Home() {
                 Aprenda com nossos vídeos
               </h2>
               <p className="text-white/85 text-xl leading-relaxed mb-8">
-                Explore os materiais disponíveis em nossa Biblioteca e aprenda mais sobre design, desenvolvimento de produtos, componentes eletrônicos e muito mais.
+                {t("inicio.videos_texto")}
               </p>
               <div className="flex flex-wrap gap-6 mb-10">
                 {[
@@ -475,10 +469,10 @@ export default function Home() {
             viewport={{ once: true }}
           >
             <h2 className="text-4xl md:text-6xl font-black text-white mb-6">
-              Pronto para colocar a mão na massa?
+              {t("inicio.cta_titulo")}
             </h2>
             <p className="text-xl md:text-2xl text-white/90 mb-10 max-w-3xl mx-auto font-medium">
-              Explore nossa Mostra de Brinquedos Científicos e comece seu primeiro projeto hoje mesmo.
+              {t("inicio.cta_texto")}
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link href="/portfolio" className="inline-block bg-accent hover:bg-accent/90 text-white font-bold text-xl px-10 py-5 rounded-2xl shadow-xl hover:-translate-y-1 transition-all">

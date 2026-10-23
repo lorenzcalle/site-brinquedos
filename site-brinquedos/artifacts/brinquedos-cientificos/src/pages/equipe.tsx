@@ -1,19 +1,12 @@
 import { Layout } from "@/components/layout";
 import { motion } from "framer-motion";
 import { Users } from "lucide-react";
-import { grupos } from "@/lib/data";
 import { useState } from "react";
+import { type TeamMember, initials, useTeam } from "@/lib/team";
+import { RichLine, useSiteTexts } from "@/lib/site-texts";
 
-type Membro = (typeof grupos)[0]["membros"][0];
-
-function MembroCard({ membro, index }: { membro: Membro; index: number }) {
+function MembroCard({ membro, index }: { membro: TeamMember; index: number }) {
   const [imgFailed, setImgFailed] = useState(false);
-
-  const iniciais = membro.nome
-    .split(" ")
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("");
 
   return (
     <motion.div
@@ -24,20 +17,20 @@ function MembroCard({ membro, index }: { membro: Membro; index: number }) {
       className="text-center group"
     >
       <div className="mb-6 mx-auto w-48 h-48 rounded-full overflow-hidden border-4 border-gray-100 shadow-xl bg-primary/10 flex items-center justify-center group-hover:border-primary transition-colors duration-300">
-        {imgFailed || !membro.foto ? (
-          <span className="text-3xl font-black text-primary">{iniciais}</span>
+        {imgFailed || !membro.photo_url ? (
+          <span className="text-3xl font-black text-primary">{initials(membro.name)}</span>
         ) : (
           <img
-            src={membro.foto}
-            alt={membro.nome}
+            src={membro.photo_url}
+            alt={membro.name}
             className="w-full h-full object-cover"
             onError={() => setImgFailed(true)}
           />
         )}
       </div>
-      <h3 className="text-xl font-bold text-foreground mb-1">{membro.nome}</h3>
-      {membro.cargo && (
-        <p className="text-primary font-bold text-sm mb-2">{membro.cargo}</p>
+      <h3 className="text-xl font-bold text-foreground mb-1">{membro.name}</h3>
+      {membro.role && (
+        <p className="text-primary font-bold text-sm mb-2">{membro.role}</p>
       )}
       {membro.bio && (
         <p className="text-muted-foreground text-sm leading-relaxed px-2 whitespace-pre-line">
@@ -49,6 +42,8 @@ function MembroCard({ membro, index }: { membro: Membro; index: number }) {
 }
 
 export default function Equipe() {
+  const t = useSiteTexts();
+  const { groups, loading } = useTeam();
   return (
     <Layout>
       {/* Hero */}
@@ -76,18 +71,19 @@ export default function Equipe() {
               Quem está por trás do projeto?
             </h2>
             <p className="text-muted-foreground text-lg leading-relaxed">
-              O <strong className="text-foreground">Projeto Brinquedos Científicos</strong> é resultado do trabalho dedicado de
-              professores, pesquisadores e estudantes da URI e de professores da Educação Básica que acreditam no poder da educação científica
-              para transformar realidades. Nossa equipe reúne diferentes formações e olhares, unidos pelo
-              mesmo compromisso: levar ciência de qualidade para dentro e fora da universidade, com
-              criatividade, rigor e muita vontade de fazer diferença.
+              <RichLine text={t("equipe.apresentacao")} />
             </p>
           </motion.div>
         </div>
       </section>
 
       {/* Seções por grupo */}
-      {grupos.map((grupo, gi) => (
+      {loading && (
+        <div className="py-24 flex flex-wrap justify-center gap-12">
+          {[1, 2, 3, 4].map(i => <div key={i} className="w-48 h-48 rounded-full bg-gray-100 animate-pulse" />)}
+        </div>
+      )}
+      {groups.filter(g => g.members.length > 0).map((grupo, gi) => (
         <section
           key={grupo.id}
           className={`py-24 ${gi % 2 === 0 ? "bg-white" : "bg-gray-50"}`}
@@ -95,16 +91,18 @@ export default function Equipe() {
           <div className="container mx-auto px-4 md:px-6">
             <div className="text-center mb-16">
               <div className="inline-flex items-center gap-2 text-orange-600 font-bold bg-orange-100 px-4 py-2 rounded-full mb-4">
-                <Users className="h-5 w-5" /> {grupo.titulo}
+                <Users className="h-5 w-5" /> {grupo.title}
               </div>
-              <h2 className="text-4xl md:text-5xl font-black text-foreground">{grupo.titulo}</h2>
-              <p className="text-xl text-muted-foreground mt-4 max-w-2xl mx-auto">
-                {grupo.subtitulo}
-              </p>
+              <h2 className="text-4xl md:text-5xl font-black text-foreground">{grupo.title}</h2>
+              {grupo.subtitle && (
+                <p className="text-xl text-muted-foreground mt-4 max-w-2xl mx-auto">
+                  {grupo.subtitle}
+                </p>
+              )}
             </div>
 
             <div className="flex flex-wrap justify-center gap-12">
-              {grupo.membros.map((membro, i) => (
+              {grupo.members.map((membro, i) => (
                 <div key={membro.id} className="w-48">
                   <MembroCard membro={membro} index={i} />
                 </div>

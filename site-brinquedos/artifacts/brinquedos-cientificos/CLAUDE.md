@@ -50,6 +50,11 @@ VITE_SUPABASE_ANON_KEY=<chave publishable>
   Submissões, Vídeos, Eventos) que carrega os próprios dados. Peças comuns (Modal, Field,
   `useConfirm` no lugar do `confirm()`) em `components/admin/ui.tsx`. Imagens são
   redimensionadas no navegador antes do upload (`src/lib/image.ts`).
+- **Textos editáveis**: `src/lib/site-texts.tsx` é o catálogo (chave, rótulo, texto padrão)
+  que monta o formulário de /admin → Textos; a página usa `const t = useSiteTexts()` e
+  `t("chave")`. Chave sem linha em `site_texts` = texto padrão do código. Para tornar um
+  texto novo editável, acrescente-o ao catálogo.
+- **Equipe** vem de `team_groups`/`team_members` (`src/lib/team.ts`), não mais de `data.ts`.
 
 ## Banco de dados (Supabase)
 
@@ -64,12 +69,15 @@ Tabelas (todas com RLS fechado — público só lê o que deve, admin gerencia):
   do `/admin`. Inscrição (`registration_url`, `registration_deadline`), álbum do Drive
   (`album_url`, `album_label`) e fotos (`photos` jsonb `[{mini, full}]`) são colunas —
   ver `supabase/eventos-admin.sql`. Fotos novas vão para o bucket `event-media`.
+- **`team_groups`**, **`team_members`** — equipe (ordem por `position`). **`site_texts`** —
+  textos das páginas (key → value). Ver `supabase/equipe-e-textos.sql`.
 - **`materials`** — vídeos tutoriais (YouTube). Público lê. Campos: id, title,
   description, category, level, video_url.
 
 SQL das políticas/tabelas versionado em `site-brinquedos/supabase/`.
 Buckets de storage: `toy-images`, `toy-guides` (leitura pública; insert público p/ o form);
-`event-media` (leitura pública; escrita só logado — fotos e capas de eventos).
+`event-media` (leitura pública; escrita só logado — fotos e capas de eventos);
+`site-media` (idem — fotos da equipe e imagens dos textos, como o banner da home).
 
 ## Deploy
 

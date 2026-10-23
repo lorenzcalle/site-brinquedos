@@ -8,10 +8,9 @@ import logoCNPq from "@/assets/images/logo-cnpq.png";
 import logoMCTI from "@/assets/images/logo-mcti.jpg";
 import logoPop from "@/assets/images/logo-pop.jpg";
 import videoBC from "@/assets/videos/videobrinquedos.mp4";
-import { grupos } from "@/lib/data";
+import { useTeam, initials } from "@/lib/team";
+import { useSiteTexts, richParagraphs } from "@/lib/site-texts";
 
-// Todos os integrantes (achatados dos grupos) p/ o carrossel rotativo da equipe.
-const ALL_MEMBERS = grupos.flatMap((g) => g.membros);
 const VISIBLE = 4;
 
 export default function About() {
@@ -23,29 +22,36 @@ export default function About() {
     }
   }, []);
 
+  const t = useSiteTexts();
+  const { groups } = useTeam();
+  // Todos os integrantes (achatados dos grupos) p/ o carrossel rotativo da equipe.
+  const ALL_MEMBERS = groups.flatMap((g) => g.members);
+
   // Carrossel da equipe: 4 cards; a cada intervalo um deles troca pelo próximo
-  // integrante, percorrendo toda a equipe em loop.
-  const [slots, setSlots] = useState(() =>
-    Array.from({ length: VISIBLE }, (_, k) => k % ALL_MEMBERS.length)
-  );
-  const nextRef = useRef({ member: VISIBLE % ALL_MEMBERS.length, slot: 0 });
+  // integrante, percorrendo toda a equipe em loop. Começa quando a equipe carrega.
+  const [slots, setSlots] = useState<number[]>([]);
+  const nextRef = useRef({ member: 0, slot: 0 });
 
   useEffect(() => {
-    if (ALL_MEMBERS.length <= VISIBLE) return;
-    const t = setInterval(() => {
+    const n = ALL_MEMBERS.length;
+    if (!n) return;
+    setSlots(Array.from({ length: Math.min(VISIBLE, n) }, (_, k) => k));
+    nextRef.current = { member: VISIBLE % n, slot: 0 };
+    if (n <= VISIBLE) return;
+    const timer = setInterval(() => {
       setSlots((prev) => {
         const { member, slot } = nextRef.current;
         const copy = [...prev];
         copy[slot] = member;
         nextRef.current = {
-          member: (member + 1) % ALL_MEMBERS.length,
+          member: (member + 1) % n,
           slot: (slot + 1) % VISIBLE,
         };
         return copy;
       });
     }, 2600);
-    return () => clearInterval(t);
-  }, []);
+    return () => clearInterval(timer);
+  }, [ALL_MEMBERS.length]);
 
   return (
     <Layout>
@@ -114,17 +120,17 @@ export default function About() {
               {
                 icon: <GraduationCap className="h-7 w-7 text-primary" />,
                 title: "A Iniciativa",
-                text: "O projeto Brinquedos Científicos é uma iniciativa educacional promovida pela URI – Campus Santo Ângelo, com apoio financeiro do Governo Federal, por meio do CNPq e do MCTI. Seu objetivo é estimular o interesse de estudantes pelas áreas de ciência, tecnologia e inovação, promovendo inclusão e protagonismo — especialmente entre jovens e meninas.",
+                text: t("sobre.iniciativa"),
               },
               {
                 icon: <Cpu className="h-7 w-7 text-primary" />,
                 title: "A Metodologia",
-                text: "Desenvolvido em escolas públicas da Região das Missões, o projeto adota atividades mão na massa: construção de brinquedos científicos e aprendizado de eletrônica, robótica e programação. Essas experiências permitem que os estudantes compreendam, de forma concreta, conteúdos que muitas vezes são apresentados apenas na teoria.",
+                text: t("sobre.metodologia"),
               },
               {
                 icon: <BookOpen className="h-7 w-7 text-primary" />,
                 title: "O Impacto",
-                text: "O projeto conta com vídeos tutoriais, materiais didáticos e acompanhamento pedagógico, garantindo uma aprendizagem estruturada. A integração entre teoria e prática estimula criatividade, pensamento crítico e trabalho em equipe, preparando os participantes para os desafios do futuro.",
+                text: t("sobre.impacto"),
               },
             ].map((item, i) => (
               <motion.div
@@ -158,15 +164,7 @@ export default function About() {
             >
               <h2 className="text-4xl font-black text-foreground mb-6">O que são <br /><span className="text-primary">Brinquedos Científicos?</span></h2>
               <div className="prose prose-lg text-muted-foreground">
-                <p>
-                  Um brinquedo científico é um objeto lúdico criado para demonstrar, de forma prática e interativa, conceitos de ciência, tecnologia, engenharia ou matemática. Diferente de um brinquedo comum, ele não serve apenas para entretenimento, mas também para ensinar, permitindo que a pessoa aprenda enquanto brinca. Esses brinquedos transformam ideias abstratas — como eletricidade, força, movimento ou programação — em experiências concretas e fáceis de entender.
-                </p>
-                <p>
-                  Geralmente, os brinquedos científicos são simples de montar e utilizam materiais acessíveis, o que facilita sua reprodução em ambientes educativos, como escolas e projetos pedagógicos. Exemplos incluem carrinhos movidos a motor elétrico, circuitos com luzes, catapultas, robôs básicos ou dispositivos que demonstram princípios físicos. Ao construir e testar esses objetos, os estudantes desenvolvem habilidades como raciocínio lógico, criatividade e resolução de problemas.
-                </p>
-                <p>
-                  Além do aprendizado técnico, os brinquedos científicos também estimulam a curiosidade e o pensamento crítico. Eles incentivam a experimentação, o erro e a descoberta. Dessa forma, são ferramentas importantes para aproximar a ciência do cotidiano e despertar o interesse dos alunos pelas áreas tecnológicas.
-                </p>
+                {richParagraphs(t("sobre.o_que_sao")).map((p, i) => <p key={i}>{p}</p>)}
               </div>
             </motion.div>
 
@@ -245,6 +243,7 @@ export default function About() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10">
             {slots.map((memberIdx, slot) => {
               const member = ALL_MEMBERS[memberIdx];
+              if (!member) return null;
               return (
                 <div key={slot} className="text-center min-h-[20rem]">
                   <AnimatePresence mode="wait">
@@ -256,11 +255,13 @@ export default function About() {
                       transition={{ duration: 0.45 }}
                       className="group"
                     >
-                      <div className="mb-5 mx-auto w-48 h-48 rounded-full overflow-hidden border-4 border-gray-100 shadow-xl group-hover:border-primary transition-colors duration-300">
-                        <img src={member.foto} alt={member.nome} className="w-full h-full object-cover" />
+                      <div className="mb-5 mx-auto w-48 h-48 rounded-full overflow-hidden border-4 border-gray-100 shadow-xl group-hover:border-primary transition-colors duration-300 bg-primary/10 flex items-center justify-center">
+                        {member.photo_url
+                          ? <img src={member.photo_url} alt={member.name} className="w-full h-full object-cover" />
+                          : <span className="text-3xl font-black text-primary">{initials(member.name)}</span>}
                       </div>
-                      <h3 className="text-xl font-bold text-foreground mb-1">{member.nome}</h3>
-                      {member.cargo && <p className="text-primary font-bold text-sm mb-2">{member.cargo}</p>}
+                      <h3 className="text-xl font-bold text-foreground mb-1">{member.name}</h3>
+                      {member.role && <p className="text-primary font-bold text-sm mb-2">{member.role}</p>}
                       <p className="text-muted-foreground text-sm leading-relaxed px-2 line-clamp-3 whitespace-pre-line">{member.bio}</p>
                     </motion.div>
                   </AnimatePresence>
