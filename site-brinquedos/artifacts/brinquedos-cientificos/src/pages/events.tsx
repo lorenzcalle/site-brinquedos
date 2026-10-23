@@ -5,7 +5,7 @@ import { Link } from "wouter";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { type EventRow as Event, type ParticipantDoc, TBD_DATE, hasParticipantInfo } from "@/lib/events";
+import { type EventRow as Event, type ParticipantDoc, TBD_DATE, hasParticipantInfo, isPast } from "@/lib/events";
 import { RichLine } from "@/lib/site-texts";
 
 function formatDate(dateStr?: string | null) {
@@ -303,8 +303,8 @@ export default function Events() {
       .order("date", { ascending: false })
       .then(({ data }) => {
         const all = (data ?? []) as Event[];
-        setUpcoming(all.filter(e => e.type === "upcoming"));
-        setPast(all.filter(e => e.type === "past"));
+        setUpcoming(all.filter(e => !isPast(e)));
+        setPast(all.filter(e => isPast(e)));
         setLoading(false);
       });
   }, []);

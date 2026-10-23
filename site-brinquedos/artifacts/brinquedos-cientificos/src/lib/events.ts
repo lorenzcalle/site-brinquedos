@@ -44,6 +44,11 @@ export const TBD_DATE = "2099-12-31";
 // Hoje no fuso do Brasil, em YYYY-MM-DD (comparável direto com a coluna `date`).
 export const today = () => new Date().toLocaleDateString("sv-SE", { timeZone: "America/Sao_Paulo" });
 
+// Evento marcado como "Próximo" cuja data já passou conta como passado: ninguém precisa
+// lembrar de mudar a situação depois que o evento acontece. "A definir" nunca passa.
+export const isPast = (ev: Pick<EventRow, "type" | "date">) =>
+  ev.type === "past" || (!!ev.date && ev.date !== TBD_DATE && ev.date < today());
+
 export const EVENT_BUCKET = "event-media";
 
 // O link que aparece na barra do navegador vem com `/u/2/` (índice da conta Google de

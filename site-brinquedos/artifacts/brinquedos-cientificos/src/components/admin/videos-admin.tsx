@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { videoThumb, isVideoUrl } from "@/lib/utils";
 import { VIDEO_CATEGORIES, VIDEO_LEVELS } from "@/lib/data";
 import { Trash2, Pencil, Plus, Video, Search, ExternalLink } from "lucide-react";
-import { EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, btn, cardCls, inputCls, useConfirm } from "./ui";
+import { EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, btn, cardCls, inputCls, useConfirm, useFieldErrors } from "./ui";
 
 type Material = {
   id: string;
@@ -28,6 +28,11 @@ export function VideosAdmin({ onChange, startNew, onStarted }: { onChange: () =>
   const [modal, setModal] = useState<null | "new" | string>(null); // "new" ou id
   const [form, setForm] = useState(emptyForm);
   const [original, setOriginal] = useState(emptyForm);
+  const { errors, check, clear, reset } = useFieldErrors<"title" | "video_url">();
+  const set = (k: keyof typeof emptyForm, v: string) => {
+    setForm(f => ({ ...f, [k]: v }));
+    if (k === "title" || k === "video_url") clear(k);
+  };
   const [saving, setSaving] = useState(false);
 
   const load = async () => {
@@ -41,7 +46,7 @@ export function VideosAdmin({ onChange, startNew, onStarted }: { onChange: () =>
     if (startNew) { openNew(); onStarted?.(); }
   }, [startNew]);
 
-  const openNew = () => { setForm(emptyForm); setOriginal(emptyForm); setModal("new"); };
+  const openNew = () => { setForm(emptyForm); setOriginal(emptyForm); reset(); setModal("new"); };
 
   const openEdit = (mat: Material) => {
     const f = {
@@ -53,18 +58,16 @@ export function VideosAdmin({ onChange, startNew, onStarted }: { onChange: () =>
     };
     setForm(f);
     setOriginal(f);
+    reset();
     setModal(mat.id);
   };
 
   const save = async () => {
-    if (!form.title.trim() || !form.video_url.trim()) {
-      toast({ title: "Preencha título e link do vídeo", variant: "destructive" });
-      return;
-    }
-    if (!isVideoUrl(form.video_url)) {
-      toast({ title: "Link de vídeo inválido", description: "Cole um link do YouTube (https://youtu.be/...) ou do Google Drive (https://drive.google.com/file/d/...).", variant: "destructive" });
-      return;
-    }
+    const url = form.video_url.trim();
+    if (!check({
+      title: !form.title.trim() && "Escreva o título do vídeo.",
+      video_url: !url ? "Cole o link do vídeo." : !isVideoUrl(url) && "Esse link não é de vídeo do YouTube nem do Google Drive. Copie o endereço da página do vídeo.",
+    })) return;
     setSaving(true);
     const payload = {
       title: form.title.trim(),
@@ -153,26 +156,26 @@ export function VideosAdmin({ onChange, startNew, onStarted }: { onChange: () =>
           saving={saving}
           dirty={JSON.stringify(form) !== JSON.stringify(original)}
         >
-          <Field label="Título">
-            <input value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Ex: Como montar o Carrinho Solar" className={inputCls} />
+          <Field label="Título" required error={errors.title}>
+            <input value={form.title} onChange={e => set("title", e.target.value)} placeholder="Ex: Como montar o Carrinho Solar" className={inputCls} />
           </Field>
-          <Field label="Link do vídeo" hint="YouTube ou Google Drive">
-            <input value={form.video_url} onChange={e => setForm({ ...form, video_url: e.target.value })} placeholder="https://youtu.be/... ou https://drive.google.com/file/d/..." className={inputCls} />
+          <Field label="Link do vídeo" required error={errors.video_url} help="Abra o vídeo no YouTube ou no Drive e copie o endereço da barra do navegador.">
+            <input value={form.video_url} onChange={e => set("video_url", e.target.value)} placeholder="https://youtu.be/... ou https://drive.google.com/file/d/..." className={inputCls} />
             {form.video_url && videoThumb(form.video_url) && (
               <img src={videoThumb(form.video_url)!} alt="prévia" className="mt-3 w-40 rounded-lg" onError={e => { e.currentTarget.style.display = "none"; }} />
             )}
           </Field>
           <Field label="Descrição">
-            <textarea value={form.description} onChange={e => setForm({ ...form, description: e.target.value })} rows={3} className={`${inputCls} resize-none`} />
+            <textarea value={form.description} onChange={e => set("description", e.target.value)} rows={3} className={`${inputCls} resize-y`} />
           </Field>
           <div className="grid grid-cols-2 gap-4">
             <Field label="Categoria">
-              <select value={form.category} onChange={e => setForm({ ...form, category: e.target.value })} className={inputCls}>
+              <select value={form.category} onChange={e => set("category", e.target.value)} className={inputCls}>
                 {VIDEO_CATEGORIES.map(c => <option key={c}>{c}</option>)}
               </select>
             </Field>
             <Field label="Nível">
-              <select value={form.level} onChange={e => setForm({ ...form, level: e.target.value })} className={inputCls}>
+              <select value={form.level} onChange={e => set("level", e.target.value)} className={inputCls}>
                 {VIDEO_LEVELS.map(l => <option key={l}>{l}</option>)}
               </select>
             </Field>

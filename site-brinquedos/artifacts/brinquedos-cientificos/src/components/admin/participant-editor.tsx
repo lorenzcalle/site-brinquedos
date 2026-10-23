@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { type ParticipantDoc, type ParticipantInfo, uploadEventDocument } from "@/lib/events";
 import { Plus, Trash2, ArrowUp, ArrowDown, Upload, Loader2, Link2, FileText } from "lucide-react";
+import { DragHandle, DropZone, moveItem, useDragSort } from "./ui";
 
 const small = "w-full px-3 py-2 rounded-lg border-2 border-gray-200 focus:border-orange-500 outline-none transition-colors text-sm";
 const MAX_MB = 50;
@@ -29,6 +30,8 @@ export function ParticipantEditor({ eventId, value, onChange, onUploaded, onBusy
   const docs = value.docs ?? [];
   const setDocs = (d: ParticipantDoc[]) => onChange({ ...value, docs: d });
   const setDoc = (i: number, patch: Partial<ParticipantDoc>) => setDocs(docs.map((d, k) => (k === i ? { ...d, ...patch } : d)));
+  const dateSort = useDragSort((a, b) => onChange({ ...value, dates: moveItem(dates, a, b) }));
+  const docSort = useDragSort((a, b) => setDocs(moveItem(docs, a, b)));
 
   const upload = async (di: number, fi: number, file: File | undefined) => {
     if (!file) return;
@@ -55,7 +58,8 @@ export function ParticipantEditor({ eventId, value, onChange, onUploaded, onBusy
       <legend className="px-1 text-sm font-black text-gray-700">Materiais para participantes</legend>
       <p className="text-xs text-gray-500">
         Regulamento, fichas, modelos e datas importantes. Aparece numa faixa laranja abaixo dos próximos eventos
-        enquanto este evento estiver como “Próximo evento”. Deixe tudo vazio para não mostrar.
+        enquanto este evento estiver em “Próximos”. Deixe tudo vazio para não mostrar. Arraste ⠿ para mudar a ordem;
+        nos botões de download, solte o arquivo em “Enviar arquivo”.
       </p>
 
       <div className="grid sm:grid-cols-2 gap-3">
@@ -74,9 +78,10 @@ export function ParticipantEditor({ eventId, value, onChange, onUploaded, onBusy
         <p className="text-xs font-bold text-gray-600 mb-1">Datas importantes</p>
         <div className="space-y-2">
           {dates.map((d, i) => (
-            <div key={i} className="flex gap-2 items-center">
-              <input value={d.date} onChange={e => onChange({ ...value, dates: dates.map((x, k) => (k === i ? { ...x, date: e.target.value } : x)) })} placeholder="15/06/2026 a 18/09/2026" className={`${small} w-44 shrink-0`} />
-              <input value={d.label} onChange={e => onChange({ ...value, dates: dates.map((x, k) => (k === i ? { ...x, label: e.target.value } : x)) })} placeholder="O que acontece" className={small} />
+            <div key={i} data-sort-item {...dateSort.item(i)} className={`flex gap-2 items-center rounded-lg ${dateSort.item(i).className}`}>
+              <DragHandle {...dateSort.handle(i)} />
+              <input value={d.date} onChange={e => onChange({ ...value, dates: dates.map((x, k) => (k === i ? { ...x, date: e.target.value } : x)) })} placeholder="15/06/2026 a 18/09/2026" className={`${small} !w-32 sm:!w-48 shrink-0`} />
+              <input value={d.label} onChange={e => onChange({ ...value, dates: dates.map((x, k) => (k === i ? { ...x, label: e.target.value } : x)) })} placeholder="O que acontece" className={`${small} flex-1 min-w-0`} />
               <button type="button" onClick={() => onChange({ ...value, dates: move(dates, i, -1) })} className="p-1.5 rounded bg-gray-100 hover:bg-gray-200 shrink-0" title="Subir"><ArrowUp className="h-3.5 w-3.5" /></button>
               <button type="button" onClick={() => onChange({ ...value, dates: dates.filter((_, k) => k !== i) })} className="p-1.5 rounded bg-red-50 hover:bg-red-100 text-red-600 shrink-0" title="Remover"><Trash2 className="h-3.5 w-3.5" /></button>
             </div>
@@ -92,8 +97,9 @@ export function ParticipantEditor({ eventId, value, onChange, onUploaded, onBusy
         <p className="text-xs font-bold text-gray-600 mb-1">Documentos</p>
         <div className="space-y-3">
           {docs.map((doc, di) => (
-            <div key={di} className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2">
+            <div key={di} data-sort-item {...docSort.item(di)} className={`rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2 ${docSort.item(di).className}`}>
               <div className="flex gap-2 items-center">
+                <DragHandle {...docSort.handle(di)} />
                 <input value={doc.title} onChange={e => setDoc(di, { title: e.target.value })} placeholder="Ex: Regulamento" className={`${small} font-bold`} />
                 <button type="button" onClick={() => setDocs(move(docs, di, -1))} className="p-1.5 rounded bg-white hover:bg-gray-100 border shrink-0" title="Subir"><ArrowUp className="h-3.5 w-3.5" /></button>
                 <button type="button" onClick={() => setDocs(move(docs, di, 1))} className="p-1.5 rounded bg-white hover:bg-gray-100 border shrink-0" title="Descer"><ArrowDown className="h-3.5 w-3.5" /></button>
@@ -106,10 +112,10 @@ export function ParticipantEditor({ eventId, value, onChange, onUploaded, onBusy
                 <div key={fi} className="flex flex-wrap gap-2 items-center bg-white rounded-lg border p-2">
                   <input value={f.label} onChange={e => setDoc(di, { files: doc.files.map((x, k) => (k === fi ? { ...x, label: e.target.value } : x)) })} placeholder="Texto do botão (ex: Baixar regulamento)" className={`${small} flex-1 min-w-[10rem]`} />
                   <input value={f.sub ?? ""} onChange={e => setDoc(di, { files: doc.files.map((x, k) => (k === fi ? { ...x, sub: e.target.value } : x)) })} placeholder="PDF · 2 MB" className={`${small} w-28`} />
-                  <label className="inline-flex items-center gap-1 text-xs font-bold bg-gray-100 hover:bg-gray-200 px-2.5 py-2 rounded-lg cursor-pointer">
+                  <DropZone label={f.url ? "Trocar arquivo" : "Enviar arquivo"} onFiles={files => upload(di, fi, files[0])}
+                    className="inline-flex items-center gap-1 text-xs font-bold bg-gray-100 hover:bg-gray-200 border-2 border-transparent px-2.5 py-1.5 rounded-lg">
                     {uploadingKey === `${di}-${fi}` ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />} {f.url ? "Trocar" : "Enviar"} arquivo
-                    <input type="file" hidden onChange={e => { upload(di, fi, e.target.files?.[0]); e.target.value = ""; }} />
-                  </label>
+                  </DropZone>
                   <button type="button" onClick={() => setDoc(di, { files: doc.files.filter((_, k) => k !== fi) })} className="p-1.5 rounded bg-red-50 hover:bg-red-100 text-red-600" title="Remover botão"><Trash2 className="h-3.5 w-3.5" /></button>
                   <div className="w-full flex items-center gap-2">
                     <Link2 className="h-3.5 w-3.5 text-gray-400 shrink-0" />

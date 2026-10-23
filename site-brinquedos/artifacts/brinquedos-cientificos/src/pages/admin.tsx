@@ -21,7 +21,7 @@ export type Section = "inicio" | "brinquedos" | "submissoes" | "videos" | "event
 const SECTIONS: { key: Section; label: string; icon: typeof Home; group?: string }[] = [
   { key: "inicio", label: "Início", icon: Home },
   { key: "brinquedos", label: "Brinquedos", icon: Puzzle, group: "Conteúdo" },
-  { key: "submissoes", label: "Submissões", icon: Inbox, group: "Conteúdo" },
+  { key: "submissoes", label: "Envios da comunidade", icon: Inbox, group: "Conteúdo" },
   { key: "videos", label: "Vídeos", icon: Video, group: "Conteúdo" },
   { key: "eventos", label: "Eventos", icon: CalendarDays, group: "Conteúdo" },
   { key: "equipe", label: "Equipe", icon: Users, group: "Páginas" },

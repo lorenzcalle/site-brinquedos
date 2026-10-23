@@ -5,7 +5,10 @@ import { type TeamGroup, type TeamMember, fetchTeam, initials } from "@/lib/team
 import { cropToJpeg } from "@/lib/image";
 import { removeSiteMedia, uploadSiteMedia } from "@/lib/media";
 import { Trash2, Loader2, Pencil, Plus, ArrowLeft, ArrowRight, ArrowUp, ArrowDown, ImagePlus, ExternalLink } from "lucide-react";
-import { EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, btn, cardCls, inputCls, useConfirm } from "./ui";
+import {
+  DragHandle, DropZone, EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, btn, cardCls, inputCls,
+  moveItem, useConfirm, useDragSort, useFieldErrors,
+} from "./ui";
 
 type MemberForm = { group_id: string; name: string; role: string; bio: string; photo_url: string | null };
 type GroupForm = { title: string; subtitle: string };
@@ -26,7 +29,8 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
   const [mOriginal, setMOriginal] = useState<MemberForm | null>(null);
   const [uploading, setUploading] = useState(false);
   const uploadedNow = useRef<string[]>([]);
-  const photoInput = useRef<HTMLInputElement>(null);
+  const memberErr = useFieldErrors<"name">();
+  const groupErr = useFieldErrors<"title">();
 
   // Modal de grupo: id do grupo, ou "new"
   const [groupModal, setGroupModal] = useState<null | string>(null);
@@ -55,6 +59,7 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
     const f = { group_id: groupId, name: "", role: "", bio: "", photo_url: null };
     setMForm(f);
     setMOriginal(f);
+    memberErr.reset();
     setMOriginalPhoto(null);
     uploadedNow.current = [];
     setMemberModal("new");
@@ -64,6 +69,7 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
     const f = { group_id: m.group_id, name: m.name, role: m.role ?? "", bio: m.bio ?? "", photo_url: m.photo_url ?? null };
     setMForm(f);
     setMOriginal(f);
+    memberErr.reset();
     setMOriginalPhoto(m.photo_url ?? null);
     uploadedNow.current = [];
     setMemberModal(m.id);
@@ -92,7 +98,7 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
   };
 
   const saveMember = async () => {
-    if (!mForm.name.trim()) return void toast({ title: "Preencha o nome", variant: "destructive" });
+    if (!memberErr.check({ name: !mForm.name.trim() && "Escreva o nome da pessoa." })) return;
     setSaving(true);
     const payload = {
       group_id: mForm.group_id,
@@ -143,16 +149,38 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
     load();
   };
 
+  // Arrastar: grava a nova ordem (posição = índice) só nas linhas que mudaram.
+  const reorder = async (table: "team_members" | "team_groups", list: { id: string; position: number }[], from: number, to: number) => {
+    if (busy || from === to) return;
+    const novo = moveItem(list, from, to);
+    if (table === "team_groups") setGroups(gs => moveItem(gs, from, to));
+    else setGroups(gs => gs.map(g => (g.members === list ? { ...g, members: novo as TeamMember[] } : g)));
+    setBusy(true);
+    const r = await Promise.all(novo.map((x, i) => x.position === i ? null : supabase.from(table).update({ position: i }).eq("id", x.id)));
+    setBusy(false);
+    const err = r.find(x => x?.error)?.error;
+    if (err) fail("Erro ao reordenar", err);
+    load();
+  };
+  // Pessoas: um único controle de arrastar para todos os grupos (índice = grupo*1000 + pessoa).
+  const memberSort = useDragSort((a, b) => {
+    const ga = Math.floor(a / 1000), gb = Math.floor(b / 1000);
+    if (ga !== gb) return void toast({ title: "Para mudar de grupo, edite a pessoa e escolha o grupo." });
+    reorder("team_members", groups[ga].members, a % 1000, b % 1000);
+  });
+  const groupSort = useDragSort((a, b) => reorder("team_groups", groups, a, b));
+
   // ─── Grupos ────────────────────────────────────────────────────────────────
   const openGroup = (g?: TeamGroup) => {
     const f = { title: g?.title ?? "", subtitle: g?.subtitle ?? "" };
     setGForm(f);
     setGOriginal(f);
+    groupErr.reset();
     setGroupModal(g?.id ?? "new");
   };
 
   const saveGroup = async () => {
-    if (!gForm.title.trim()) return void toast({ title: "Preencha o nome do grupo", variant: "destructive" });
+    if (!groupErr.check({ title: !gForm.title.trim() && "Escreva o nome do grupo." })) return;
     setSaving(true);
     const payload = { title: gForm.title.trim(), subtitle: gForm.subtitle.trim() || null };
     const { error } = groupModal === "new"
@@ -178,7 +206,7 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
     <>
       <SectionHeader
         title="Equipe"
-        subtitle="Página Equipe e o carrossel de O Projeto. A ordem aqui é a ordem do site. Clique numa pessoa para editar."
+        subtitle="Página Equipe e o carrossel de O Projeto. A ordem aqui é a ordem do site: arraste pessoas e grupos para mudar. Clique numa pessoa para editar."
         action={
           <div className="flex flex-wrap gap-2">
             <a href="/equipe" target="_blank" rel="noopener noreferrer" className={btn.secondary}>
@@ -195,8 +223,9 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
 
       <div className="space-y-5">
         {groups.map((g, gi) => (
-          <section key={g.id} className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-4 sm:p-5">
-            <div className="flex items-start gap-3 mb-4">
+          <section key={g.id} data-sort-item {...groupSort.item(gi)} className={`bg-white rounded-2xl border border-gray-200/80 shadow-sm p-4 sm:p-5 ${groupSort.item(gi).className}`}>
+            <div className="flex items-start gap-2 mb-4">
+              <span className="mt-1"><DragHandle {...groupSort.handle(gi)} /></span>
               <div className="flex-1 min-w-0">
                 <h2 className="text-lg font-black">{g.title}</h2>
                 {g.subtitle && <p className="text-sm text-gray-500">{g.subtitle}</p>}
@@ -213,7 +242,7 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
 
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
               {g.members.map((m, mi) => (
-                <div key={m.id} className={`${cardCls} !shadow-none p-3 pt-4 text-center`}>
+                <div key={m.id} {...memberSort.whole(gi * 1000 + mi)} className={`${cardCls} !shadow-none p-3 pt-4 text-center cursor-grab ${memberSort.whole(gi * 1000 + mi).className}`}>
                   <div className="absolute top-1 right-1">
                     <ItemMenu label={`Ações de ${m.name}`} items={[
                       { label: "Editar", icon: Pencil, onSelect: () => openEditMember(m) },
@@ -223,7 +252,7 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
                     ]} />
                   </div>
                   <div className="mx-auto mb-2 w-20 h-20 rounded-full overflow-hidden bg-orange-50 flex items-center justify-center">
-                    {m.photo_url ? <img src={m.photo_url} alt="" className="w-full h-full object-cover" /> : <span className="text-xl font-black text-orange-400">{initials(m.name)}</span>}
+                    {m.photo_url ? <img src={m.photo_url} alt="" draggable={false} className="w-full h-full object-cover" /> : <span className="text-xl font-black text-orange-400">{initials(m.name)}</span>}
                   </div>
                   <OpenButton onClick={() => openEditMember(m)} label={`Editar ${m.name}`} className="w-full !text-center">
                     <span className="block text-sm font-bold leading-tight">{m.name}</span>
@@ -250,26 +279,25 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
           dirty={JSON.stringify(mForm) !== JSON.stringify(mOriginal)}
         >
           <div className="flex items-center gap-4">
-            <button type="button" onClick={() => photoInput.current?.click()} disabled={uploading}
+            <DropZone label={mForm.photo_url ? "Trocar a foto" : "Enviar foto"} accept="image/*" disabled={uploading} onFiles={f => uploadPhoto(f[0])}
               className="w-24 h-24 rounded-full overflow-hidden border-2 border-dashed border-gray-300 hover:border-orange-400 bg-gray-50 flex items-center justify-center shrink-0">
               {uploading ? <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
                 : mForm.photo_url ? <img src={mForm.photo_url} alt="" className="w-full h-full object-cover" />
                 : <ImagePlus className="h-6 w-6 text-gray-400" />}
-            </button>
+            </DropZone>
             <div className="text-sm text-gray-500">
               <p className="font-bold text-gray-700">Foto</p>
-              <p>Clique no círculo para {mForm.photo_url ? "trocar" : "enviar"}. A foto é cortada em quadrado pelo centro.</p>
+              <p>Clique no círculo ou arraste a foto para ele. Ela é cortada em quadrado pelo centro.</p>
               {mForm.photo_url && <button type="button" onClick={() => setMForm(f => ({ ...f, photo_url: null }))} className="text-red-600 font-bold hover:underline mt-1">Remover foto</button>}
             </div>
-            <input ref={photoInput} type="file" accept="image/*" hidden onChange={e => { uploadPhoto(e.target.files?.[0]); e.target.value = ""; }} />
           </div>
-          <Field label="Nome">
-            <input value={mForm.name} onChange={e => setMForm({ ...mForm, name: e.target.value })} className={inputCls} />
+          <Field label="Nome" required error={memberErr.errors.name}>
+            <input value={mForm.name} onChange={e => { setMForm({ ...mForm, name: e.target.value }); memberErr.clear("name"); }} className={inputCls} />
           </Field>
           <Field label="Cargo" hint="opcional">
             <input value={mForm.role} onChange={e => setMForm({ ...mForm, role: e.target.value })} placeholder="Ex: Coordenadora, Bolsista CNPq, Mentora" className={inputCls} />
           </Field>
-          <Field label="Descrição" hint="cada linha aparece em uma linha no site">
+          <Field label="Descrição" hint="opcional" help="Cada linha aqui vira uma linha no site.">
             <textarea value={mForm.bio} onChange={e => setMForm({ ...mForm, bio: e.target.value })} rows={3} placeholder={"Escola ou instituição.\nÁrea de atuação: Matemática"} className={`${inputCls} resize-none`} />
           </Field>
           <Field label="Grupo">
@@ -288,8 +316,8 @@ export function TeamAdmin({ onChange }: { onChange: () => void }) {
           saving={saving}
           dirty={JSON.stringify(gForm) !== JSON.stringify(gOriginal)}
         >
-          <Field label="Nome do grupo">
-            <input value={gForm.title} onChange={e => setGForm({ ...gForm, title: e.target.value })} placeholder="Ex: Acadêmicos Bolsistas" className={inputCls} />
+          <Field label="Nome do grupo" required error={groupErr.errors.title}>
+            <input value={gForm.title} onChange={e => { setGForm({ ...gForm, title: e.target.value }); groupErr.clear("title"); }} placeholder="Ex: Acadêmicos Bolsistas" className={inputCls} />
           </Field>
           <Field label="Frase abaixo do nome" hint="opcional">
             <input value={gForm.subtitle} onChange={e => setGForm({ ...gForm, subtitle: e.target.value })} className={inputCls} />

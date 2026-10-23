@@ -2,13 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 import {
-  type EventPhoto, type EventRow, TBD_DATE, today,
+  type EventPhoto, type EventRow, TBD_DATE, today, isPast,
   type ParticipantInfo, eventFileUrls,
   normalizeDriveFolder, uploadEventPhoto, uploadEventCover, removeEventFiles,
 } from "@/lib/events";
-import { EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, SubHeading, btn, cardCls, inputCls, useConfirm } from "./ui";
+import {
+  DragHandle, DropHint, DropZone, EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, PillTabs, SectionHeader, SubHeading,
+  btn, cardCls, inputCls, moveItem, useConfirm, useDragSort, useFieldErrors,
+} from "./ui";
 import { ParticipantEditor, cleanParticipantInfo } from "./participant-editor";
-import { Trash2, Loader2, Pencil, Plus, ImagePlus, ArrowLeft, ArrowRight, CalendarCheck, CalendarX, AlertTriangle, ExternalLink } from "lucide-react";
+import { Trash2, Pencil, Plus, ImagePlus, ArrowLeft, ArrowRight, CalendarCheck, CalendarX, ExternalLink, Info } from "lucide-react";
 
 type Form = {
   title: string;
@@ -31,6 +34,10 @@ const emptyForm: Form = {
   title: "", date: "", dateTbd: false, time: "", location: "", description: "", type: "upcoming",
   registration_url: "", registration_deadline: "", album_url: "", album_label: "", image_url: null, photos: [], participant: {},
 };
+
+type Tab = "info" | "inscricao" | "fotos" | "materiais";
+type ErrKey = "title" | "date" | "registration_url" | "registration_deadline" | "album_url";
+const ERR_TAB: Record<ErrKey, Tab> = { title: "info", date: "info", registration_url: "inscricao", registration_deadline: "inscricao", album_url: "fotos" };
 
 function formatDate(d?: string | null) {
   if (!d || d === TBD_DATE) return "Data a definir";
@@ -55,8 +62,9 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
   const [uploading, setUploading] = useState(0);
   // Arquivos enviados nesta edição: se cancelar, são apagados do bucket.
   const uploadedNow = useRef<string[]>([]);
-  const photoInput = useRef<HTMLInputElement>(null);
-  const coverInput = useRef<HTMLInputElement>(null);
+  const [tab, setTab] = useState<Tab>("info");
+  const { errors, check, clear, reset } = useFieldErrors<ErrKey>();
+  const photoSort = useDragSort((from, to) => set("photos", moveItem(form.photos, from, to)));
 
   const load = async () => {
     const { data, error } = await supabase.from("events").select("*").order("date", { ascending: false });
@@ -71,13 +79,19 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
     if (startNew) { openNew(); onStarted?.(); }
   }, [startNew]);
 
-  const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm(f => ({ ...f, [k]: v }));
+  const set = <K extends keyof Form>(k: K, v: Form[K]) => {
+    setForm(f => ({ ...f, [k]: v }));
+    if (k in ERR_TAB) clear(k as ErrKey);
+    if (k === "dateTbd") clear("date");
+  };
 
   const openNew = () => {
     setEditingId(crypto.randomUUID());
     setIsNew(true);
     setForm(emptyForm);
     setOriginal(emptyForm);
+    setTab("info");
+    reset();
     uploadedNow.current = [];
   };
 
@@ -102,6 +116,8 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
     setIsNew(false);
     setForm(f);
     setOriginal(f);
+    setTab("info");
+    reset();
     uploadedNow.current = [];
   };
 
@@ -113,9 +129,8 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
     setEditingId(null);
   };
 
-  const addPhotos = async (files: FileList | null) => {
-    if (!files?.length || !editingId) return;
-    const list = Array.from(files);
+  const addPhotos = async (list: File[]) => {
+    if (!list.length || !editingId) return;
     setUploading(n => n + list.length);
     for (const file of list) {
       try {
@@ -154,10 +169,20 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
 
   const save = async () => {
     if (!editingId) return;
-    if (!form.title.trim()) return void toast({ title: "Preencha o título", variant: "destructive" });
-    if (!form.dateTbd && !form.date) return void toast({ title: "Preencha a data (ou marque “Data a definir”)", variant: "destructive" });
     const reg = form.registration_url.trim();
-    if (reg && !/^https?:\/\//.test(reg)) return void toast({ title: "O link de inscrição deve começar com https://", variant: "destructive" });
+    const album = form.album_url.trim();
+    const found: Partial<Record<ErrKey, string | false>> = {
+      title: !form.title.trim() && "Escreva o nome do evento.",
+      date: !form.dateTbd && !form.date && "Escolha a data — ou marque “Ainda sem data”.",
+      registration_url: !!reg && !/^https?:\/\//.test(reg) && "O link precisa começar com https:// (copie o endereço inteiro do formulário).",
+      registration_deadline: !!reg && !!form.registration_deadline && !form.dateTbd && !!form.date && form.registration_deadline > form.date && "O prazo de inscrição está depois do dia do evento.",
+      album_url: !!album && !/^https?:\/\//.test(album) && "O link do álbum precisa começar com https://",
+    };
+    if (!check(found)) {
+      const first = (Object.keys(ERR_TAB) as ErrKey[]).find(k => found[k]);
+      if (first) setTab(ERR_TAB[first]);
+      return;
+    }
 
     setSaving(true);
     const payload = {
@@ -218,52 +243,44 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
 
   if (loading) return <Loading />;
 
-  const upcoming = events.filter(e => e.type === "upcoming");
-  const past = events.filter(e => e.type === "past");
+  const upcoming = events.filter(e => !isPast(e));
+  const past = events.filter(e => isPast(e));
 
   const card = (ev: EventRow) => {
-    const late = ev.type === "upcoming" && ev.date && ev.date !== TBD_DATE && ev.date < today();
     const cover = ev.image_url ?? ev.photos?.[0]?.mini;
     return (
-      <div key={ev.id} className={`${cardCls} p-3 sm:p-4 ${late ? "!border-amber-300" : ""}`}>
-        <div className="flex gap-4 items-center">
-          <div className="w-20 sm:w-28 aspect-video rounded-lg overflow-hidden bg-orange-50 shrink-0 flex items-center justify-center">
-            {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : <CalendarCheck className="h-6 w-6 text-orange-300" />}
-          </div>
-          <OpenButton onClick={() => openEdit(ev)} label={`Editar ${ev.title}`} className="flex-1 min-w-0">
-            <span className="text-base font-bold leading-snug line-clamp-2 sm:line-clamp-1">{ev.title}</span>
-            <span className="block text-sm text-gray-600 sm:truncate">
-              {[formatDate(ev.date), ev.time, ev.location].filter(Boolean).join(" · ")}
-            </span>
-            <span className="block text-xs text-gray-500 truncate">
-              {[ev.registration_url && "com inscrição", ev.photos?.length && `${ev.photos.length} foto(s)`, ev.album_url && "álbum", ev.participant_info && "materiais para participantes"].filter(Boolean).join(" · ")}
-            </span>
-          </OpenButton>
-          <ItemMenu items={[
-            { label: "Editar", icon: Pencil, onSelect: () => openEdit(ev) },
-            { label: "Ver na página Eventos", icon: ExternalLink, onSelect: () => window.open("/eventos", "_blank", "noopener") },
-            { label: "Marcar como passado", icon: CalendarX, hidden: ev.type !== "upcoming", onSelect: () => markPast(ev) },
-            { label: "Excluir", icon: Trash2, danger: true, onSelect: () => remove(ev) },
-          ]} />
+      <div key={ev.id} className={`${cardCls} p-3 sm:p-4 flex gap-4 items-center`}>
+        <div className="w-20 sm:w-28 aspect-video rounded-lg overflow-hidden bg-orange-50 shrink-0 flex items-center justify-center">
+          {cover ? <img src={cover} alt="" className="w-full h-full object-cover" /> : <CalendarCheck className="h-6 w-6 text-orange-300" />}
         </div>
-        {late && (
-          <div className="relative z-10 mt-3 flex flex-wrap items-center gap-3 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2">
-            <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0" />
-            <span className="text-sm text-amber-900 flex-1">A data já passou, mas o evento ainda aparece em “Próximos eventos”.</span>
-            <button onClick={() => markPast(ev)} disabled={busyId === ev.id} className="text-sm font-bold bg-amber-500 hover:bg-amber-600 disabled:opacity-60 text-white px-3 py-1.5 rounded-lg transition-colors inline-flex items-center gap-2">
-              {busyId === ev.id && <Loader2 className="h-4 w-4 animate-spin" />} Marcar como passado
-            </button>
-          </div>
-        )}
+        <OpenButton onClick={() => openEdit(ev)} label={`Editar ${ev.title}`} className="flex-1 min-w-0">
+          <span className="text-base font-bold leading-snug line-clamp-2 sm:line-clamp-1">{ev.title}</span>
+          <span className="block text-sm text-gray-600 sm:truncate">
+            {[formatDate(ev.date), ev.time, ev.location].filter(Boolean).join(" · ")}
+          </span>
+          <span className="block text-xs text-gray-500 truncate">
+            {[ev.registration_url && "com inscrição", ev.photos?.length && `${ev.photos.length} foto(s)`, ev.album_url && "álbum", ev.participant_info && "materiais para participantes"].filter(Boolean).join(" · ")}
+          </span>
+        </OpenButton>
+        <ItemMenu items={[
+          { label: "Editar", icon: Pencil, onSelect: () => openEdit(ev) },
+          { label: "Ver na página Eventos", icon: ExternalLink, onSelect: () => window.open("/eventos", "_blank", "noopener") },
+          { label: "Mover para passados", icon: CalendarX, hidden: isPast(ev), onSelect: () => markPast(ev) },
+          { label: "Excluir", icon: Trash2, danger: true, onSelect: () => remove(ev) },
+        ]} />
       </div>
     );
   };
+
+  const autoPast = form.type === "upcoming" && !form.dateTbd && !!form.date && form.date < today();
+  const errTabs = new Set((Object.keys(errors) as ErrKey[]).map(k => ERR_TAB[k]));
+  const docsCount = form.participant.docs?.length ?? 0;
 
   return (
     <>
       <SectionHeader
         title="Eventos"
-        subtitle="Página Eventos e Oficinas. Mudanças aparecem no site na hora."
+        subtitle="Página Eventos e Oficinas. Depois da data, o evento passa sozinho para “Passados”."
         action={
           <button onClick={openNew} className={btn.primary}>
             <Plus className="h-5 w-5" /> Novo evento
@@ -288,99 +305,111 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
           saving={saving}
           busy={uploading > 0}
           dirty={JSON.stringify(form) !== JSON.stringify(original)}
+          toolbar={
+            <PillTabs<Tab> label="Partes do evento" value={tab} onChange={setTab} className="mb-3 !flex-nowrap max-w-full overflow-x-auto" items={[
+              { key: "info", label: "Informações", alert: errTabs.has("info") },
+              { key: "inscricao", label: "Inscrição", alert: errTabs.has("inscricao") },
+              { key: "fotos", label: "Fotos", count: form.photos.length || undefined, alert: errTabs.has("fotos") },
+              { key: "materiais", label: "Materiais", count: docsCount || undefined },
+            ]} />
+          }
         >
-          <Field label="Título">
-            <input value={form.title} onChange={e => set("title", e.target.value)} className={inputCls} />
-          </Field>
-
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Field label="Data">
-              <input type="date" value={form.date} disabled={form.dateTbd} onChange={e => set("date", e.target.value)} className={`${inputCls} disabled:bg-gray-50 disabled:text-gray-400`} />
-              <label className="mt-1.5 flex items-center gap-2 text-sm text-gray-600">
-                <input type="checkbox" checked={form.dateTbd} onChange={e => set("dateTbd", e.target.checked)} /> Data a definir
-              </label>
+          {tab === "info" && <>
+            <Field label="Nome do evento" required error={errors.title}>
+              <input value={form.title} onChange={e => set("title", e.target.value)} placeholder="Ex: Mostra Missioneira de Brinquedos Científicos" className={inputCls} />
             </Field>
-            <Field label="Horário" hint="texto livre">
-              <input value={form.time} onChange={e => set("time", e.target.value)} placeholder="Ex: 8h às 18h" className={inputCls} />
-            </Field>
-          </div>
 
-          <Field label="Local">
-            <input value={form.location} onChange={e => set("location", e.target.value)} placeholder="Ex: URI — Santo Ângelo/RS" className={inputCls} />
-          </Field>
-
-          <Field label="Descrição">
-            <textarea value={form.description} onChange={e => set("description", e.target.value)} rows={3} className={`${inputCls} resize-none`} />
-          </Field>
-
-          <Field label="Situação">
-            <div className="grid grid-cols-2 gap-2">
-              {([["upcoming", "Próximo evento"], ["past", "Já aconteceu"]] as const).map(([v, l]) => (
-                <button key={v} type="button" onClick={() => set("type", v)}
-                  className={`py-2.5 rounded-xl font-bold border-2 transition-colors ${form.type === v ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200 text-gray-500 hover:bg-gray-50"}`}>
-                  {l}
-                </button>
-              ))}
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Field label="Data" required error={errors.date}>
+                <input type="date" value={form.date} disabled={form.dateTbd} onChange={e => set("date", e.target.value)} className={`${inputCls} disabled:bg-gray-50 disabled:text-gray-400`} />
+                <label className="mt-2 flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                  <input type="checkbox" checked={form.dateTbd} onChange={e => set("dateTbd", e.target.checked)} className="h-4 w-4 accent-orange-500" /> Ainda sem data (aparece “A definir”)
+                </label>
+              </Field>
+              <Field label="Horário" help="Escreva como quiser.">
+                <input value={form.time} onChange={e => set("time", e.target.value)} placeholder="Ex: 8h às 18h" className={inputCls} />
+              </Field>
             </div>
-          </Field>
 
-          {/* Inscrição */}
-          <fieldset className="rounded-xl border border-gray-200 p-4 space-y-3">
-            <legend className="px-1 text-sm font-black text-gray-700">Inscrição</legend>
-            <p className="text-xs text-gray-500">
-              Com link, o evento ganha o banner laranja com botão “Inscrever-se”. Depois do prazo, o botão some
-              e o selo vira “Inscrições encerradas”. Sem link, o botão leva para a página de contato.
+            <Field label="Local">
+              <input value={form.location} onChange={e => set("location", e.target.value)} placeholder="Ex: URI — Santo Ângelo/RS" className={inputCls} />
+            </Field>
+
+            <Field label="Descrição" help="Aparece no card do evento.">
+              <textarea value={form.description} onChange={e => set("description", e.target.value)} rows={4} className={`${inputCls} resize-y`} />
+            </Field>
+
+            <Field label="Onde aparece">
+              <div className="grid grid-cols-2 gap-2">
+                {([["upcoming", "Próximos eventos"], ["past", "Eventos passados"]] as const).map(([v, l]) => (
+                  <button key={v} type="button" onClick={() => set("type", v)} aria-pressed={form.type === v}
+                    className={`py-2.5 rounded-xl font-bold border-2 transition-colors ${form.type === v ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200 text-gray-600 hover:bg-gray-50"}`}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </Field>
+            {autoPast && (
+              <p className="flex gap-2 text-sm text-blue-900 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2">
+                <Info className="h-4 w-4 mt-0.5 shrink-0" /> A data já passou, então o site mostra este evento em “Eventos passados” automaticamente.
+              </p>
+            )}
+          </>}
+
+          {tab === "inscricao" && <>
+            <p className="flex gap-2 text-sm text-gray-600 bg-gray-50 rounded-xl px-3 py-2.5">
+              <Info className="h-4 w-4 mt-0.5 shrink-0 text-gray-500" />
+              <span>Com link, o evento ganha o botão laranja “Inscrever-se”. Depois do prazo, o botão some e aparece
+              “Inscrições encerradas”. Sem link, o botão leva para a página de contato.</span>
             </p>
-            <Field label="Link do formulário" hint="opcional">
+            <Field label="Link do formulário de inscrição" error={errors.registration_url} help="Ex.: o endereço do Google Forms.">
               <input value={form.registration_url} onChange={e => set("registration_url", e.target.value)} placeholder="https://..." className={inputCls} />
             </Field>
-            <Field label="Último dia de inscrição" hint="opcional">
+            <Field label="Último dia de inscrição" error={errors.registration_deadline} help={form.registration_url.trim() ? "Vazio = inscrições abertas até o evento." : "Preencha o link primeiro."}>
               <input type="date" value={form.registration_deadline} disabled={!form.registration_url.trim()} onChange={e => set("registration_deadline", e.target.value)} className={`${inputCls} disabled:bg-gray-50`} />
             </Field>
-          </fieldset>
+          </>}
 
-          {/* Imagens */}
-          <fieldset className="rounded-xl border border-gray-200 p-4 space-y-4">
-            <legend className="px-1 text-sm font-black text-gray-700">Imagens</legend>
-
+          {tab === "fotos" && <>
             <div>
-              <p className="text-sm font-bold text-gray-700 mb-1">Capa do card <span className="font-normal text-gray-500">(opcional)</span></p>
-              <div className="flex items-center gap-3">
-                {form.image_url && <img src={form.image_url} alt="" className="w-32 aspect-video object-cover rounded-lg border" />}
-                <button type="button" onClick={() => coverInput.current?.click()} className="text-sm font-bold bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg">
-                  {form.image_url ? "Trocar" : "Enviar capa"}
-                </button>
-                {form.image_url && <button type="button" onClick={() => set("image_url", null)} className="text-sm font-bold text-red-600 hover:underline">Remover</button>}
-                <input ref={coverInput} type="file" accept="image/*" hidden onChange={e => { setCover(e.target.files?.[0]); e.target.value = ""; }} />
+              <p className="text-sm font-bold text-gray-700 mb-1">Imagem de capa</p>
+              <p className="text-xs text-gray-500 mb-2">Aparece no topo do card. Sem capa, o site usa a primeira foto.</p>
+              <div className="flex flex-wrap items-center gap-3">
+                <DropZone label={form.image_url ? "Trocar a capa" : "Enviar capa"} accept="image/*" onFiles={f => setCover(f[0])}
+                  className="w-48 aspect-video rounded-xl border-2 border-dashed border-gray-300 hover:border-orange-400 bg-gray-50 overflow-hidden flex items-center justify-center">
+                  {form.image_url ? <img src={form.image_url} alt="" className="w-full h-full object-cover" /> : <DropHint icon={ImagePlus} text="Enviar capa" sub="ou arraste" />}
+                </DropZone>
+                {form.image_url && <button type="button" onClick={() => set("image_url", null)} className="text-sm font-bold text-red-600 hover:underline">Remover capa</button>}
               </div>
             </div>
 
             <div>
               <p className="text-sm font-bold text-gray-700 mb-1">Fotos do evento</p>
               <p className="text-xs text-gray-500 mb-2">
-                Aparecem como miniaturas no card de evento passado e ampliam ao clicar. São cortadas em 16:9
-                pelo centro — confira a miniatura (foto vertical perde o topo e a base). 4 a 6 fotos ficam bem.
+                Miniaturas que ampliam ao clicar. São cortadas em 16:9 pelo centro (foto em pé perde o topo e a base).
+                4 a 6 fotos ficam bem. Arraste uma foto para mudar a ordem.
               </p>
               <div className="flex flex-wrap gap-2">
                 {form.photos.map((p, i) => (
-                  <div key={p.mini} className="relative w-32 aspect-video rounded-lg overflow-hidden border group">
-                    <img src={p.mini} alt="" className="w-full h-full object-cover" />
+                  <div key={p.mini} {...photoSort.whole(i)}
+                    className={`relative w-32 aspect-video rounded-lg overflow-hidden border group cursor-grab ${photoSort.whole(i).className}`}>
+                    <img src={p.mini} alt={`Foto ${i + 1}`} className="w-full h-full object-cover pointer-events-none" />
                     <div className="absolute inset-0 bg-black/50 sm:opacity-0 sm:group-hover:opacity-100 focus-within:opacity-100 transition-opacity flex items-center justify-center gap-1">
-                      <button type="button" onClick={() => movePhoto(i, -1)} className="p-1 rounded bg-white/90" title="Mover para a esquerda"><ArrowLeft className="h-4 w-4" /></button>
-                      <button type="button" onClick={() => set("photos", form.photos.filter((_, j) => j !== i))} className="p-1 rounded bg-white/90 text-red-600" title="Remover"><Trash2 className="h-4 w-4" /></button>
-                      <button type="button" onClick={() => movePhoto(i, 1)} className="p-1 rounded bg-white/90" title="Mover para a direita"><ArrowRight className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => set("photos", moveItem(form.photos, i, Math.max(0, i - 1)))} className="p-1 rounded bg-white/90" title="Mover para a esquerda" aria-label="Mover para a esquerda"><ArrowLeft className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => set("photos", form.photos.filter((_, j) => j !== i))} className="p-1 rounded bg-white/90 text-red-600" title="Remover" aria-label="Remover foto"><Trash2 className="h-4 w-4" /></button>
+                      <button type="button" onClick={() => set("photos", moveItem(form.photos, i, Math.min(form.photos.length - 1, i + 1)))} className="p-1 rounded bg-white/90" title="Mover para a direita" aria-label="Mover para a direita"><ArrowRight className="h-4 w-4" /></button>
                     </div>
                   </div>
                 ))}
-                <button type="button" onClick={() => photoInput.current?.click()} className="w-32 aspect-video rounded-lg border-2 border-dashed border-gray-300 hover:border-orange-400 text-gray-500 hover:text-orange-600 flex flex-col items-center justify-center text-xs font-bold transition-colors">
+                <DropZone label="Adicionar fotos" accept="image/*" multiple onFiles={addPhotos}
+                  className="w-32 aspect-video rounded-lg border-2 border-dashed border-gray-300 hover:border-orange-400 text-gray-500 hover:text-orange-600 flex flex-col items-center justify-center text-xs font-bold">
                   <ImagePlus className="h-5 w-5 mb-1" /> Adicionar
-                </button>
-                <input ref={photoInput} type="file" accept="image/*" multiple hidden onChange={e => { addPhotos(e.target.files); e.target.value = ""; }} />
+                </DropZone>
               </div>
             </div>
 
             <div className="grid sm:grid-cols-2 gap-4">
-              <Field label="Álbum completo" hint="pasta do Drive">
+              <Field label="Álbum completo" hint="pasta do Google Drive" error={errors.album_url}>
                 <input value={form.album_url} onChange={e => set("album_url", e.target.value)} placeholder="https://drive.google.com/drive/folders/..." className={inputCls} />
               </Field>
               <Field label="Texto do botão do álbum">
@@ -388,19 +417,21 @@ export function EventsAdmin({ onChange, startNew, onStarted }: { onChange: () =>
               </Field>
             </div>
             {form.album_url.trim() && (
-              <a href={normalizeDriveFolder(form.album_url)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-bold text-blue-600 hover:underline">
+              <a href={normalizeDriveFolder(form.album_url)} target="_blank" rel="noopener noreferrer" className={`${btn.link} text-xs`}>
                 <ExternalLink className="h-3 w-3" /> Testar o link do álbum (abra numa janela anônima para ver como o público vê)
               </a>
             )}
-          </fieldset>
+          </>}
 
-          <ParticipantEditor
-            eventId={editingId}
-            value={form.participant}
-            onChange={v => set("participant", v)}
-            onUploaded={url => uploadedNow.current.push(url)}
-            onBusy={d => setUploading(n => n + d)}
-          />
+          {tab === "materiais" && (
+            <ParticipantEditor
+              eventId={editingId}
+              value={form.participant}
+              onChange={v => set("participant", v)}
+              onUploaded={url => uploadedNow.current.push(url)}
+              onBusy={d => setUploading(n => n + d)}
+            />
+          )}
         </Modal>
       )}
       {confirmDialog}

@@ -64,7 +64,7 @@ export function SubmissionsAdmin({ onChange }: { onChange: () => void }) {
     const { error: updErr } = await supabase.from("submissions").update({ status: "approved" }).eq("id", item.id);
     setBusyId(null);
     if (updErr) {
-      toast({ title: "Publicado, mas houve um aviso", description: "O brinquedo foi publicado, mas a submissão não foi marcada como aprovada.", variant: "destructive" });
+      toast({ title: "Publicado, mas houve um aviso", description: "O brinquedo foi publicado, mas o envio não foi marcado como aprovado.", variant: "destructive" });
     } else {
       toast({ title: "Brinquedo publicado! 🎉", description: `${item.title} — já aparece em Brinquedos e no site.` });
     }
@@ -79,7 +79,7 @@ export function SubmissionsAdmin({ onChange }: { onChange: () => void }) {
       toast({ title: "Erro ao atualizar", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: status === "rejected" ? "Submissão rejeitada" : "Restaurada para pendentes", description: item.title });
+    toast({ title: status === "rejected" ? "Envio rejeitado" : "Voltou para revisão", description: item.title });
     changed();
   };
 
@@ -93,7 +93,7 @@ export function SubmissionsAdmin({ onChange }: { onChange: () => void }) {
       toast({ title: "Erro ao excluir", description: error.message, variant: "destructive" });
       return;
     }
-    toast({ title: "Submissão excluída", description: item.title });
+    toast({ title: "Envio excluído", description: item.title });
     changed();
   };
 
@@ -102,17 +102,17 @@ export function SubmissionsAdmin({ onChange }: { onChange: () => void }) {
   return (
     <>
       <SectionHeader
-        title="Submissões"
-        subtitle="Brinquedos enviados pela comunidade no formulário “Enviar brinquedo”. Aprovar publica no site."
+        title="Envios da comunidade"
+        subtitle="Brinquedos que professores e estudantes mandam pelo formulário “Enviar brinquedo” do site. Aprovar publica no Portfólio; rejeitar guarda em “Rejeitados” (dá para restaurar)."
       />
-      <PillTabs<"pending" | "rejected"> label="Situação das submissões" value={view} onChange={setView} items={[
+      <PillTabs<"pending" | "rejected"> label="Situação dos envios" value={view} onChange={setView} items={[
         { key: "pending", label: "Aguardando revisão", count: pending.length },
-        { key: "rejected", label: "Rejeitadas", count: rejected.length },
+        { key: "rejected", label: "Rejeitados", count: rejected.length },
       ]} />
 
       {loading ? <Loading /> : list.length === 0 ? (
         <EmptyState>
-          {view === "pending" ? "Nenhuma submissão aguardando revisão. 🎉" : "Nenhuma submissão rejeitada."}
+          {view === "pending" ? "Nenhum envio esperando revisão. 🎉" : "Nenhum envio rejeitado."}
         </EmptyState>
       ) : view === "pending" ? pending.map(item => (
         <div key={item.id} className="bg-white rounded-2xl border border-gray-200/80 shadow-sm p-5 sm:p-6 mb-4">

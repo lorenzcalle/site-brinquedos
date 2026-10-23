@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
-import { type EventRow, TBD_DATE, today } from "@/lib/events";
+import { type EventRow, isPast, today } from "@/lib/events";
 import { type Toy } from "@/lib/types";
 import { HOME_FEATURED_SLOTS } from "@/lib/toys";
 import { Inbox, Puzzle, Video, CalendarDays, AlertTriangle, Info, Plus, ArrowRight, CheckCircle2, ExternalLink } from "lucide-react";
@@ -37,16 +37,14 @@ export function Dashboard({ go }: { go: (s: Section, startNew?: boolean) => void
 
   if (loading) return <Loading />;
 
-  const upcoming = events.filter(e => e.type === "upcoming");
-  const past = events.filter(e => e.type === "past");
+  const upcoming = events.filter(e => !isPast(e));
+  const past = events.filter(e => isPast(e));
   const featured = toys.filter(t => t.featured).length;
 
   const alerts: Alert[] = [];
   if (pending > 0)
-    alerts.push({ tone: "warn", text: `${pending} brinquedo(s) enviado(s) pela comunidade aguardando revisão.`, action: "Revisar", go: "submissoes" });
+    alerts.push({ tone: "warn", text: `${pending} brinquedo(s) enviado(s) pela comunidade esperando sua revisão.`, action: "Revisar", go: "submissoes" });
   for (const ev of upcoming) {
-    if (ev.date && ev.date !== TBD_DATE && ev.date < today())
-      alerts.push({ tone: "warn", text: `“${ev.title}” já aconteceu, mas ainda aparece em Próximos eventos.`, action: "Resolver", go: "eventos" });
     if (ev.registration_url && ev.registration_deadline) {
       const d = daysUntil(ev.registration_deadline);
       if (d >= 0 && d <= 7)
@@ -65,7 +63,7 @@ export function Dashboard({ go }: { go: (s: Section, startNew?: boolean) => void
     { label: "Brinquedos publicados", value: toys.length, icon: Puzzle, go: "brinquedos" },
     { label: "Vídeos tutoriais", value: videos, icon: Video, go: "videos" },
     { label: "Eventos", value: events.length, sub: `${upcoming.length} próximo(s) · ${past.length} passado(s)`, icon: CalendarDays, go: "eventos" },
-    { label: "Submissões pendentes", value: pending, icon: Inbox, go: "submissoes" },
+    { label: "Envios para revisar", value: pending, icon: Inbox, go: "submissoes" },
   ];
 
   return (

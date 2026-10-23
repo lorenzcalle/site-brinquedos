@@ -5,7 +5,7 @@ import { SITE_TEXT_PAGES, type SiteTextDef, loadSiteTexts } from "@/lib/site-tex
 import { fitToJpeg } from "@/lib/image";
 import { removeSiteMedia, uploadSiteMedia } from "@/lib/media";
 import { Loader2, ExternalLink, RotateCcw, ImagePlus } from "lucide-react";
-import { Loading, PillTabs, SectionHeader, btn, inputCls, useConfirm } from "./ui";
+import { DropHint, DropZone, Loading, PillTabs, SectionHeader, btn, inputCls, useConfirm } from "./ui";
 
 // Textos das páginas (tabela site_texts). Cada página do site é uma aba; os campos vêm
 // do catálogo em src/lib/site-texts.tsx, com o texto original como padrão.
@@ -136,10 +136,10 @@ export function TextsAdmin() {
               {d.kind === "image" ? (
                 <div className="flex flex-wrap items-center gap-4">
                   <img src={v} alt="" className="max-h-32 rounded-lg border" />
-                  <label className={`${btn.subtle} cursor-pointer focus-within:ring-2 focus-within:ring-orange-500`}>
-                    {uploading === d.key ? <Loader2 className="h-4 w-4 animate-spin" /> : <ImagePlus className="h-4 w-4" />} Trocar imagem
-                    <input type="file" accept="image/*" hidden onChange={e => { uploadImage(d.key, e.target.files?.[0]); e.target.value = ""; }} />
-                  </label>
+                  <DropZone label="Trocar imagem" accept="image/*" disabled={!!uploading} onFiles={f => uploadImage(d.key, f[0])}
+                    className="rounded-xl border-2 border-dashed border-gray-300 hover:border-orange-400 bg-gray-50 px-5 py-4">
+                    {uploading === d.key ? <Loader2 className="h-6 w-6 animate-spin text-orange-500" /> : <DropHint icon={ImagePlus} text="Trocar imagem" sub="clique ou arraste a nova" />}
+                  </DropZone>
                 </div>
               ) : d.kind === "text" ? (
                 <textarea id={`txt-${d.key}`} value={v} onChange={e => set(d.key, e.target.value)} rows={Math.min(10, Math.max(3, Math.ceil(v.length / 90) + v.split("\n").length))} className={`${inputCls} resize-y`} />

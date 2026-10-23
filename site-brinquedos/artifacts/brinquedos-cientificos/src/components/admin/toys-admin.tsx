@@ -5,20 +5,23 @@ import { type Toy } from "@/lib/types";
 import { fitToJpeg, uniqueName } from "@/lib/image";
 import { Trash2, Loader2, Pencil, Plus, Search, Star, FileText, ImagePlus, ExternalLink } from "lucide-react";
 import { HOME_FEATURED_SLOTS, removeToyFiles, toArray } from "@/lib/toys";
-import { EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, btn, cardCls, inputCls, useConfirm } from "./ui";
+import {
+  DropHint, DropZone, EmptyState, Field, ItemMenu, Loading, Modal, OpenButton, SectionHeader, TagInput, btn, cardCls, inputCls,
+  useConfirm, useFieldErrors,
+} from "./ui";
 
 type Form = {
   title: string;
   description: string;
-  concepts: string;
-  materials: string;
+  concepts: string[];
+  materials: string[];
   concepts_description: string;
   image: string;
   guide_url: string | null;
   featured: boolean;
 };
 
-const emptyForm: Form = { title: "", description: "", concepts: "", materials: "", concepts_description: "", image: "", guide_url: null, featured: false };
+const emptyForm: Form = { title: "", description: "", concepts: [], materials: [], concepts_description: "", image: "", guide_url: null, featured: false };
 
 const MAX_PDF_MB = 20;
 
@@ -37,8 +40,7 @@ export function ToysAdmin({ onChange, startNew, onStarted }: { onChange: () => v
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<null | "image" | "guide">(null);
   const uploadedNow = useRef<string[]>([]); // apagados do storage se cancelar
-  const imageInput = useRef<HTMLInputElement>(null);
-  const guideInput = useRef<HTMLInputElement>(null);
+  const { errors, check, clear, reset } = useFieldErrors<"title" | "description" | "image">();
 
   const load = async () => {
     const { data, error } = await supabase.from("toys").select("*").eq("status", "approved").order("title");
@@ -53,11 +55,15 @@ export function ToysAdmin({ onChange, startNew, onStarted }: { onChange: () => v
   }, [startNew]);
 
   const featuredCount = toys.filter(t => t.featured).length;
-  const set = <K extends keyof Form>(k: K, v: Form[K]) => setForm(f => ({ ...f, [k]: v }));
+  const set = <K extends keyof Form>(k: K, v: Form[K]) => {
+    setForm(f => ({ ...f, [k]: v }));
+    if (k === "title" || k === "description" || k === "image") clear(k);
+  };
 
   const openNew = () => {
     setForm(emptyForm);
     setOriginal(emptyForm);
+    reset();
     uploadedNow.current = [];
     setModal("new");
   };
@@ -66,8 +72,8 @@ export function ToysAdmin({ onChange, startNew, onStarted }: { onChange: () => v
     const f: Form = {
       title: toy.title,
       description: toy.description ?? "",
-      concepts: (toy.concepts ?? []).join(", "),
-      materials: (toy.materials ?? []).join(", "),
+      concepts: toArray(toy.concepts),
+      materials: toArray(toy.materials),
       concepts_description: toy.concepts_description ?? "",
       image: toy.image ?? "",
       guide_url: toy.guide_url ?? null,
@@ -75,6 +81,7 @@ export function ToysAdmin({ onChange, startNew, onStarted }: { onChange: () => v
     };
     setForm(f);
     setOriginal(f);
+    reset();
     uploadedNow.current = [];
     setModal(toy.id);
   };
@@ -127,17 +134,19 @@ export function ToysAdmin({ onChange, startNew, onStarted }: { onChange: () => v
   const fullMsg = { title: `A página inicial mostra só ${HOME_FEATURED_SLOTS} destaques`, description: "Tire a estrela de outro brinquedo antes.", variant: "destructive" as const };
 
   const save = async () => {
-    if (!form.title.trim()) return void toast({ title: "Preencha o nome do brinquedo", variant: "destructive" });
-    if (!form.description.trim()) return void toast({ title: "Preencha a descrição", variant: "destructive" });
-    if (!form.image) return void toast({ title: "Envie uma imagem do brinquedo", variant: "destructive" });
+    if (!check({
+      title: !form.title.trim() && "Escreva o nome do brinquedo.",
+      image: !form.image && "Envie uma foto do brinquedo.",
+      description: !form.description.trim() && "Escreva uma descrição curta.",
+    })) return;
     if (form.featured && !original.featured && !canFeature(modal === "new" ? null : modal)) return void toast(fullMsg);
 
     setSaving(true);
     const payload = {
       title: form.title.trim(),
       description: form.description.trim(),
-      concepts: toArray(form.concepts),
-      materials: toArray(form.materials),
+      concepts: form.concepts,
+      materials: form.materials,
       concepts_description: form.concepts_description.trim() || null,
       image: form.image,
       guide_url: form.guide_url,
@@ -242,43 +251,40 @@ export function ToysAdmin({ onChange, startNew, onStarted }: { onChange: () => v
           dirty={JSON.stringify(form) !== JSON.stringify(original)}
           saveLabel={modal === "new" ? "Publicar" : "Salvar"}
         >
-          <Field label="Nome do brinquedo">
-            <input value={form.title} onChange={e => set("title", e.target.value)} className={inputCls} />
+          <Field label="Nome do brinquedo" required error={errors.title}>
+            <input value={form.title} onChange={e => set("title", e.target.value)} placeholder="Ex: Carrinho Solar" className={inputCls} />
           </Field>
 
           <div className="grid sm:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm font-bold text-gray-700 mb-1">Imagem</p>
-              <button type="button" onClick={() => imageInput.current?.click()} disabled={!!uploading}
-                className="w-full aspect-[4/3] rounded-xl border-2 border-dashed border-gray-300 hover:border-orange-400 overflow-hidden flex items-center justify-center bg-gray-50 transition-colors">
+            <Field label="Foto" required error={errors.image} help={form.image ? "Clique na foto ou arraste outra para trocar." : undefined}>
+              <DropZone label={form.image ? "Trocar a foto" : "Enviar foto"} accept="image/*" disabled={!!uploading} onFiles={f => uploadImage(f[0])}
+                className={`w-full aspect-[4/3] rounded-xl border-2 border-dashed ${errors.image ? "border-red-400" : "border-gray-300"} hover:border-orange-400 overflow-hidden flex items-center justify-center bg-gray-50`}>
                 {uploading === "image" ? <Loader2 className="h-6 w-6 animate-spin text-orange-500" />
                   : form.image ? <img src={form.image} alt="" className="w-full h-full object-contain" />
-                  : <span className="flex flex-col items-center text-gray-400 text-sm font-bold"><ImagePlus className="h-6 w-6 mb-1" /> Enviar imagem</span>}
-              </button>
-              {form.image && <p className="text-xs text-gray-500 mt-1">Clique na imagem para trocar.</p>}
-              <input ref={imageInput} type="file" accept="image/*" hidden onChange={e => { uploadImage(e.target.files?.[0]); e.target.value = ""; }} />
-            </div>
+                  : <DropHint icon={ImagePlus} text="Enviar foto" />}
+              </DropZone>
+            </Field>
             <div className="space-y-4">
               <div>
-                <p className="text-sm font-bold text-gray-700 mb-1">Guia de construção <span className="font-normal text-gray-500">(PDF)</span></p>
+                <p className="text-sm font-bold text-gray-700 mb-1">Guia de construção <span className="font-normal text-gray-500">(PDF, até {MAX_PDF_MB} MB)</span></p>
                 {form.guide_url ? (
-                  <div className="flex flex-wrap items-center gap-3">
-                    <a href={form.guide_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-sm font-bold text-blue-600 hover:underline">
-                      <FileText className="h-4 w-4" /> Abrir PDF
-                    </a>
-                    <button type="button" onClick={() => guideInput.current?.click()} className="text-sm font-bold bg-gray-100 hover:bg-gray-200 px-3 py-1.5 rounded-lg">Trocar</button>
-                    <button type="button" onClick={() => set("guide_url", null)} className="text-sm font-bold text-red-600 hover:underline">Remover</button>
+                  <div className="flex flex-wrap items-center gap-2 rounded-xl border-2 border-gray-200 p-2.5">
+                    <FileText className="h-5 w-5 text-red-500 shrink-0" />
+                    <a href={form.guide_url} target="_blank" rel="noopener noreferrer" className={`${btn.link} text-sm flex-1`}>Abrir o PDF</a>
+                    <DropZone label="Trocar o PDF" accept="application/pdf" disabled={!!uploading} onFiles={f => uploadGuide(f[0])} className={btn.subtle}>
+                      {uploading === "guide" ? <Loader2 className="h-4 w-4 animate-spin" /> : "Trocar"}
+                    </DropZone>
+                    <button type="button" onClick={() => set("guide_url", null)} className="text-sm font-bold text-red-600 hover:underline px-1">Remover</button>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => guideInput.current?.click()} disabled={!!uploading}
-                    className="inline-flex items-center gap-2 text-sm font-bold bg-gray-100 hover:bg-gray-200 px-3 py-2 rounded-lg">
-                    {uploading === "guide" ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />} Enviar PDF
-                  </button>
+                  <DropZone label="Enviar PDF" accept="application/pdf" disabled={!!uploading} onFiles={f => uploadGuide(f[0])}
+                    className="w-full rounded-xl border-2 border-dashed border-gray-300 hover:border-orange-400 bg-gray-50 py-4 flex items-center justify-center">
+                    {uploading === "guide" ? <Loader2 className="h-6 w-6 animate-spin text-orange-500" /> : <DropHint icon={FileText} text="Enviar PDF" />}
+                  </DropZone>
                 )}
-                <input ref={guideInput} type="file" accept="application/pdf" hidden onChange={e => { uploadGuide(e.target.files?.[0]); e.target.value = ""; }} />
               </div>
               <label className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3 cursor-pointer">
-                <input type="checkbox" checked={form.featured} onChange={e => set("featured", e.target.checked)} className="mt-1" />
+                <input type="checkbox" checked={form.featured} onChange={e => set("featured", e.target.checked)} className="mt-1 h-4 w-4 accent-amber-500" />
                 <span className="text-sm text-amber-900">
                   <strong>Destaque na página inicial</strong><br />
                   Aparece na seção “Nossa missão” ({HOME_FEATURED_SLOTS} vagas).
@@ -287,17 +293,17 @@ export function ToysAdmin({ onChange, startNew, onStarted }: { onChange: () => v
             </div>
           </div>
 
-          <Field label="Descrição">
-            <textarea value={form.description} onChange={e => set("description", e.target.value)} rows={4} className={`${inputCls} resize-none`} />
+          <Field label="Descrição" required error={errors.description} help="O que o brinquedo faz e o que ele ensina.">
+            <textarea value={form.description} onChange={e => set("description", e.target.value)} rows={4} className={`${inputCls} resize-y`} />
           </Field>
-          <Field label="Conceitos" hint="separados por vírgula">
-            <input value={form.concepts} onChange={e => set("concepts", e.target.value)} placeholder="Ex: Energia solar, Circuitos" className={inputCls} />
+          <Field label="Conceitos científicos" help="Digite um conceito e aperte Enter (ou vírgula) para adicionar.">
+            <TagInput value={form.concepts} onChange={v => set("concepts", v)} placeholder="Ex: Energia solar" />
           </Field>
           <Field label="Explicação dos conceitos" hint="opcional">
-            <textarea value={form.concepts_description} onChange={e => set("concepts_description", e.target.value)} rows={3} className={`${inputCls} resize-none`} />
+            <textarea value={form.concepts_description} onChange={e => set("concepts_description", e.target.value)} rows={3} className={`${inputCls} resize-y`} />
           </Field>
-          <Field label="Materiais" hint="separados por vírgula">
-            <input value={form.materials} onChange={e => set("materials", e.target.value)} placeholder="Ex: Garrafa PET, Motor DC, Fios" className={inputCls} />
+          <Field label="Materiais usados" help="Um por vez, Enter para adicionar.">
+            <TagInput value={form.materials} onChange={v => set("materials", v)} placeholder="Ex: Garrafa PET" />
           </Field>
         </Modal>
       )}

@@ -51,7 +51,9 @@ VITE_SUPABASE_ANON_KEY=<chave publishable>
   (menu lateral; no celular, ☰), sem o `Layout` do site. Peças comuns em
   `components/admin/ui.tsx`: `Modal` (Radix; pergunta antes de descartar se `dirty`),
   `cardCls` + `OpenButton` (card inteiro clicável), `ItemMenu` (menu ⋯), `btn.*`, `Field`
-  (liga rótulo ao campo), `PillTabs`, `useConfirm` no lugar do `confirm()`. Imagens são
+  (liga rótulo ao campo; `required`, `error`, `help`), `useFieldErrors` (erro embaixo do
+  campo, não em toast), `DropZone` (clique ou arraste o arquivo), `TagInput`, `useDragSort`
+  (reordenar arrastando), `PillTabs`, `useConfirm` no lugar do `confirm()`. Imagens são
   redimensionadas no navegador antes do upload (`src/lib/image.ts`).
 - **Textos editáveis**: `src/lib/site-texts.tsx` é o catálogo (chave, rótulo, texto padrão)
   que monta o formulário de /admin → Textos; a página usa `const t = useSiteTexts()` e
@@ -72,6 +74,8 @@ Tabelas (todas com RLS fechado — público só lê o que deve, admin gerencia):
   do `/admin`. Inscrição (`registration_url`, `registration_deadline`), álbum do Drive
   (`album_url`, `album_label`) e fotos (`photos` jsonb `[{mini, full}]`) são colunas —
   ver `supabase/eventos-admin.sql`. Fotos novas vão para o bucket `event-media`.
+  Evento “upcoming” cuja data já passou é tratado como passado no site e no admin
+  (`isPast()` em `src/lib/events.ts`) — não precisa trocar o `type` à mão.
   `participant_info` (jsonb) = materiais para participantes (datas, documentos) que
   aparecem enquanto o evento é “Próximo” — `supabase/eventos-materiais.sql`; arquivos no
   bucket `event-files` (até 50 MB).
