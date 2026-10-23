@@ -5,12 +5,13 @@ import logoImg from "@/assets/images/logo-principal.png";
 import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import {
   Loader2, LogOut, Home, Puzzle, Inbox, Video, CalendarDays, Users, Type, Atom, Menu, ExternalLink, Eye, EyeOff, ArrowLeft,
-  KeyRound, LifeBuoy,
+  KeyRound, LifeBuoy, BookOpen,
 } from "lucide-react";
 import { Dashboard } from "@/components/admin/dashboard";
 import { ToysAdmin } from "@/components/admin/toys-admin";
 import { SubmissionsAdmin } from "@/components/admin/submissions-admin";
 import { VideosAdmin } from "@/components/admin/videos-admin";
+import { ManualsAdmin } from "@/components/admin/manuals-admin";
 import { EventsAdmin } from "@/components/admin/events-admin";
 import { TeamAdmin } from "@/components/admin/team-admin";
 import { TextsAdmin } from "@/components/admin/texts-admin";
@@ -20,13 +21,14 @@ import { HelpAdmin } from "@/components/admin/help-admin";
 import { AccountModal, FirstPasswordScreen } from "@/components/admin/account";
 import { btn, inputCls } from "@/components/admin/ui";
 
-export type Section = "inicio" | "brinquedos" | "submissoes" | "videos" | "eventos" | "equipe" | "textos" | "acesso" | "ajuda";
+export type Section = "inicio" | "brinquedos" | "submissoes" | "videos" | "manuais" | "eventos" | "equipe" | "textos" | "acesso" | "ajuda";
 
 const SECTIONS: { key: Section; label: string; icon: typeof Home; group?: string }[] = [
   { key: "inicio", label: "Início", icon: Home },
   { key: "brinquedos", label: "Brinquedos", icon: Puzzle, group: "Conteúdo" },
   { key: "submissoes", label: "Envios da comunidade", icon: Inbox, group: "Conteúdo" },
   { key: "videos", label: "Vídeos", icon: Video, group: "Conteúdo" },
+  { key: "manuais", label: "Manuais", icon: BookOpen, group: "Conteúdo" },
   { key: "eventos", label: "Eventos", icon: CalendarDays, group: "Conteúdo" },
   { key: "equipe", label: "Equipe", icon: Users, group: "Páginas" },
   { key: "textos", label: "Textos do site", icon: Type, group: "Páginas" },
@@ -214,14 +216,15 @@ export default function Admin() {
   const loadCounts = async () => {
     window.dispatchEvent(new Event("admin:changed")); // o botão Publicar reconta as alterações
     const head = { count: "exact" as const, head: true };
-    const [t, s, v, e, m] = await Promise.all([
+    const [t, s, v, e, m, mn] = await Promise.all([
       supabase.from("toys").select("id", head).eq("status", "approved"),
       supabase.from("submissions").select("id", head).eq("status", "pending"),
       supabase.from("materials").select("id", head),
       supabase.from("events").select("id", head),
       supabase.from("team_members").select("id", head),
+      supabase.from("manuals").select("id", head),
     ]);
-    setCounts({ brinquedos: t.count ?? 0, submissoes: s.count ?? 0, videos: v.count ?? 0, eventos: e.count ?? 0, equipe: m.count ?? 0 });
+    setCounts({ brinquedos: t.count ?? 0, submissoes: s.count ?? 0, videos: v.count ?? 0, manuais: mn.count ?? 0, eventos: e.count ?? 0, equipe: m.count ?? 0 });
   };
 
   useEffect(() => { if (session) loadCounts(); }, [session]);
@@ -272,6 +275,7 @@ export default function Admin() {
           {section === "brinquedos" && <ToysAdmin {...sectionProps} />}
           {section === "submissoes" && <SubmissionsAdmin onChange={loadCounts} />}
           {section === "videos" && <VideosAdmin {...sectionProps} />}
+          {section === "manuais" && <ManualsAdmin {...sectionProps} />}
           {section === "eventos" && <EventsAdmin {...sectionProps} />}
           {section === "equipe" && <TeamAdmin onChange={loadCounts} />}
           {section === "textos" && <TextsAdmin />}

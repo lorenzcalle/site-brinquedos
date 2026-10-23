@@ -17,7 +17,7 @@ export type Activity = {
 };
 
 const ENTITY: Record<string, string> = {
-  brinquedo: "o brinquedo", evento: "o evento", video: "o vídeo", pessoa: "", grupo: "o grupo",
+  brinquedo: "o brinquedo", evento: "o evento", video: "o vídeo", manual: "o manual", pessoa: "", grupo: "o grupo",
   texto: "o texto", envio: "o envio", site: "o site", acesso: "",
 };
 

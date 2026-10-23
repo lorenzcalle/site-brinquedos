@@ -82,6 +82,15 @@ const GROUPS: { title: string; topics: Topic[] }[] = [
           "Escolha a categoria e o nível e clique em Salvar.",
         ],
       },
+      {
+        q: "Como colocar um manual ou apostila em PDF?", go: "manuais",
+        steps: [
+          "Em Manuais, clique em “Novo manual” e solte o PDF (até 50 MB).",
+          "A capa sai sozinha da 1ª página do PDF; confira o título e escreva uma descrição curta.",
+          "Clique em Publicar. Ele aparece na aba Manuais da página Materiais.",
+        ],
+        tip: "Para mudar a ordem, arraste o manual pela alça ⠿ (ou use o menu ⋯ no celular).",
+      },
     ],
   },
   {

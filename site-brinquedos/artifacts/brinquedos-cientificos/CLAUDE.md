@@ -47,7 +47,7 @@ VITE_SUPABASE_ANON_KEY=<chave publishable>
   Operações privilegiadas só funcionam logado (papel `authenticated` no RLS).
   Painel em seções (`/admin#brinquedos` etc.): `src/pages/admin.tsx` só tem login, menu e
   contagens; cada seção é um componente em `src/components/admin/` (Início, Brinquedos,
-  Submissões, Vídeos, Eventos) que carrega os próprios dados. O painel tem layout próprio
+  Submissões, Vídeos, Manuais, Eventos…) que carrega os próprios dados. O painel tem layout próprio
   (menu lateral; no celular, ☰), sem o `Layout` do site. Peças comuns em
   `components/admin/ui.tsx`: `Modal` (Radix; pergunta antes de descartar se `dirty`),
   `cardCls` + `OpenButton` (card inteiro clicável), `ItemMenu` (menu ⋯), `btn.*`, `Field`
@@ -83,11 +83,18 @@ Tabelas (todas com RLS fechado — público só lê o que deve, admin gerencia):
   textos das páginas (key → value). Ver `supabase/equipe-e-textos.sql`.
 - **`materials`** — vídeos tutoriais (YouTube). Público lê. Campos: id, title,
   description, category, level, video_url.
+- **`manuals`** — PDFs da aba “Manuais” de `/materiais` (`/materiais#manuais` abre direto
+  nela). Editados em /admin → Manuais; ordem por `position`. Arquivos e capas no bucket
+  `manuais` (até 50 MB). A capa e o nº de páginas saem do PDF no navegador com pdf.js
+  (`readPdf()` em `src/lib/manuals.ts`, import dinâmico: não pesa no site). Ver
+  `supabase/manuais.sql`. PDF grande: comprimir antes (imagens Flate → JPEG) — os do Robô
+  Sumô caíram de 18/27 MB para 5/6 MB sem perda visível.
 
 SQL das políticas/tabelas versionado em `site-brinquedos/supabase/`.
 Buckets de storage: `toy-images`, `toy-guides` (leitura pública; insert público p/ o form);
 `event-media` (leitura pública; escrita só logado — fotos e capas de eventos);
 `site-media` (idem — fotos da equipe e imagens dos textos, como o banner da home).
+`manuais` (idem — PDFs e capas da aba Manuais).
 
 ## Contas e histórico (Fase C do painel)
 

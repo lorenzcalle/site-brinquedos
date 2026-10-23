@@ -48,9 +48,9 @@ export const ROUTE_META = {
     priority: 0.9,
   },
   "/materiais": {
-    title: "Tutoriais em Vídeo — Brinquedos Científicos",
+    title: "Vídeos e Manuais — Brinquedos Científicos",
     description:
-      "Tutoriais em vídeo para montar brinquedos científicos passo a passo, organizados por categoria e nível de dificuldade.",
+      "Tutoriais em vídeo para montar brinquedos científicos passo a passo e manuais em PDF para baixar, imprimir e usar em sala de aula.",
     priority: 0.8,
   },
   "/agente": {
